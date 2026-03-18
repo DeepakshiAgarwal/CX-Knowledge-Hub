@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CX Knowledge Hub</title>
+<!-- mammoth.js for real DOCX parsing in browser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surf:#fff;
+  --k9:#1a1814;--k7:#2e2b26;--k5:#5a5650;--k3:#8c8880;--k2:#b5b1ab;
+  --s1:#f3f1ec;--s2:#e8e4db;--s3:#d4cfc4;
+  --teal:#0f7870;--tealm:#1a9e93;--teall:#e8f5f3;
+  --amber:#d97706;--ambl:#fef3c7;
+  --rose:#dc3545;--rosel:#fde8ea;
+  --ind:#4f46e5;--indl:#eef2ff;
+  --grn:#16a34a;--grnl:#dcfce7;
+  --pur:#9333ea;--purl:#fdf4ff;
+  --org:#ea580c;--orgl:#fff7ed;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sha:0 1px 3px rgba(26,24,20,.08);
+  --shb:0 4px 14px rgba(26,24,20,.1);
+  --shc:0 10px 40px rgba(26,24,20,.15);
+  --sw:270px;
+  --fn:'Outfit',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ease:.18s cubic-bezier(.4,0,.2,1);
+}
+body{font-family:var(--fn);background:var(--bg);color:var(--k9);display:flex;height:100vh;overflow:hidden;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:99px}
+
+/* ── SIDEBAR ── */
+#sb{width:var(--sw);min-width:var(--sw);background:var(--k9);display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:width var(--ease),min-width var(--ease);flex-shrink:0;border-right:1px solid rgba(255,255,255,.05)}
+#sb.col{width:56px;min-width:56px}
+#sb.col .lbl,#sb.col .wn,#sb.col .sec,#sb.col .nbt,#sb.col .nbg,#sb.col .nar{opacity:0;width:0;overflow:hidden;pointer-events:none;white-space:nowrap}
+.sht{padding:14px 12px 11px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.07)}
+.slg{width:29px;height:29px;border-radius:7px;flex-shrink:0;background:linear-gradient(135deg,var(--tealm),var(--teal));display:flex;align-items:center;justify-content:center;font-size:14px}
+.wn{font-size:13px;font-weight:600;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:var(--ease)}
+.cob{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;padding:4px;border-radius:4px;transition:var(--ease);flex-shrink:0;font-size:11px}
+.cob:hover{color:rgba(255,255,255,.75);background:rgba(255,255,255,.08)}
+.ssrch{padding:9px 11px}
+.sri{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);padding:7px 10px;display:flex;align-items:center;gap:7px;cursor:pointer;transition:var(--ease)}
+.sri:hover{background:rgba(255,255,255,.1)}
+.nscr{flex:1;overflow-y:auto;padding:4px 0 12px}
+.sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.22);padding:12px 14px 4px;display:block;transition:var(--ease)}
+.nb{display:flex;align-items:center;gap:7px;padding:6px 12px;border:none;background:none;color:rgba(255,255,255,.55);font-family:var(--fn);font-size:13px;cursor:pointer;text-align:left;width:100%;transition:var(--ease);white-space:nowrap}
+.nb:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nb.act{color:#fff;background:rgba(255,255,255,.11)}
+.ni{font-size:14px;width:19px;text-align:center;flex-shrink:0;opacity:.75}
+.lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:var(--ease)}
+.nbg{font-size:10px;background:rgba(255,255,255,.11);color:rgba(255,255,255,.4);padding:1px 6px;border-radius:99px;flex-shrink:0}
+.nar{font-size:9px;opacity:.28;transition:transform var(--ease);flex-shrink:0}
+.nar.op{transform:rotate(90deg)}
+.nch{overflow:hidden;max-height:0;transition:max-height .22s ease;padding-left:9px}
+.nch.op{max-height:500px}
+.nch .nb{font-size:12.5px;padding:5px 12px;color:rgba(255,255,255,.4)}
+.nch .nb:hover{color:rgba(255,255,255,.78)}
+.sft{padding:8px 10px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:6px}
+.impbtn{width:100%;background:rgba(15,120,112,.25);border:1px solid rgba(15,120,112,.45);color:rgba(255,255,255,.8);padding:8px 11px;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:var(--fn);display:flex;align-items:center;gap:6px;justify-content:center;transition:var(--ease);font-weight:500}
+.impbtn:hover{background:rgba(15,120,112,.42);color:#fff;border-color:rgba(15,120,112,.65)}
+.impbtn.sec2{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.55);font-weight:400}
+.impbtn.sec2:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{background:var(--surf);border-bottom:1px solid var(--s2);padding:0 24px;height:52px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bc{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--k3);flex:1;min-width:0}
+.bc span{cursor:pointer;transition:color var(--ease);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.bc span:hover{color:var(--teal)}.bc .bcs{color:var(--s3);cursor:default}.bc .bcc{color:var(--k7);font-weight:500}
+.tbr{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--s2);border-radius:var(--r);background:var(--surf);color:var(--k5);font-size:12.5px;font-family:var(--fn);cursor:pointer;transition:var(--ease);white-space:nowrap}
+.btn:hover{background:var(--s1);color:var(--k7);border-color:var(--s3)}
+.btnp{background:var(--teal);border-color:var(--teal);color:#fff}
+.btnp:hover{background:var(--tealm);border-color:var(--tealm);color:#fff}
+.btnimport{background:var(--ind);border-color:var(--ind);color:#fff;font-weight:500}
+.btnimport:hover{background:#4338ca;border-color:#4338ca;color:#fff}
+.avc{display:flex;align-items:center;gap:5px;padding:2px 9px 2px 3px;border:1px solid var(--s2);border-radius:99px;cursor:pointer}
+.av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.avnm{font-size:12px;color:var(--k5)}.rlbg{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--teall);color:var(--teal);font-weight:600}
+
+/* ── CONTENT ── */
+#ca{flex:1;overflow:hidden;display:flex}
+.ms{flex:1;overflow-y:auto}
+
+/* ── DASHBOARD ── */
+.dash{padding:34px 36px 64px;max-width:1060px}
+.dtit{font-size:26px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.dsub{font-size:14px;color:var(--k3)}
+.ddt{font-size:12px;color:var(--k2);margin-top:2px;margin-bottom:26px}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}
+.sc{background:var(--surf);border:1px solid var(--s2);border-radius:var(--rl);padding:17px 18px;position:relative;overflow:hidden;transition:var(--ease)}
+.sc:hover{border-color:var(--s3);box-shadow:var(--sha)}
+.sc::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.sc.ct::before{background:var(--teal)}.sc.ci::before{background:var(--ind)}.sc.ca::before{background:var(--amber)}.sc.cg::before{background:var(--grn)}
+.slb{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--k2);margin-bottom:5px}
+.sv{font-size:27px;font-weight:700;color:var(--k9);line-height:1}
+.sm{font-size:12px;color:var(--k3);margin-top:2px}
+.dg2{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.wg{background:var(--surf);border:1px solid var(--s2);border-radius:var(--rxl);overflow:hidden}
+.wgh{padding:13px 18px;border-bottom:1px solid var(--s1);display:flex;align-items:center;justify-content:space-between}
+.wgt{font-size:13.5px;font-weight:600;color:var(--k7)}.wga{font-size:12px;color:var(--teal);cursor:pointer;background:none;border:none;font-family:var(--fn);transition:var(--ease)}
+.wga:hover{color:var(--tealm)}
+.dr{display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid var(--s1);cursor:pointer;transition:background var(--ease)}
+.dr:last-child{border-bottom:none}.dr:hover{background:var(--bg)}
+.deb{width:30px;height:30px;border-radius:7px;background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.di{flex:1;min-width:0}
+.dn{font-size:13px;font-weight:500;color:var(--k7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dm{font-size:11.5px;color:var(--k2);margin-top:1px}
+.tp{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.tsc{background:var(--indl);color:var(--ind)}.tso{background:var(--teall);color:var(--teal)}.ttr{background:var(--grnl);color:var(--grn)}.tfq{background:var(--ambl);color:var(--amber)}.trv{background:var(--rosel);color:var(--rose)}.tbi{background:var(--purl);color:var(--pur)}.tte{background:var(--grnl);color:var(--grn)}.tre{background:var(--orgl);color:var(--org)}.tup{background:var(--indl);color:var(--ind)}
+.pdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:5px;vertical-align:middle}
+
+/* ── IMPORT BANNER on dashboard ── */
+.import-hero{background:linear-gradient(135deg,#0f7870 0%,#1a9e93 50%,#4f46e5 100%);border-radius:var(--rxl);padding:22px 26px;margin-bottom:24px;display:flex;align-items:center;gap:20px;cursor:pointer;transition:opacity var(--ease)}
+.import-hero:hover{opacity:.92}
+.ih-icon{font-size:40px;flex-shrink:0}
+.ih-text h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:3px}
+.ih-text p{font-size:13px;color:rgba(255,255,255,.8)}
+.ih-formats{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.fmt-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.18);color:#fff}
+.ih-arrow{margin-left:auto;font-size:24px;color:rgba(255,255,255,.7);flex-shrink:0}
+
+/* ── EDITOR ── */
+.eo{max-width:750px;margin:0 auto;padding:40px 48px 80px}
+.pepb{font-size:48px;cursor:pointer;display:inline-block;margin-bottom:8px;transition:transform var(--ease);line-height:1}
+.pepb:hover{transform:scale(1.07)}
+.ptit{display:block;width:100%;border:none;outline:none;font-family:var(--fn);font-size:30px;font-weight:700;color:var(--k9);background:transparent;resize:none;overflow:hidden;line-height:1.25}
+.ptit::placeholder{color:var(--s3)}
+.mst{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:9px 0;margin:11px 0;border-top:1px solid var(--s1);border-bottom:1px solid var(--s1)}
+.mc{display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--k3)}
+.tgch{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto}
+.toolbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--s1);padding:6px 48px;margin:0 -48px 18px;display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.tb{background:none;border:none;padding:4px 7px;border-radius:5px;cursor:pointer;font-size:13px;color:var(--k3);font-family:var(--fn);transition:var(--ease)}
+.tb:hover{background:var(--s1);color:var(--k7)}
+.tbsel{border:none;background:none;font-family:var(--fn);font-size:12.5px;color:var(--k3);padding:4px 6px;border-radius:5px;cursor:pointer;outline:none}
+.tbsel:hover{background:var(--s1)}
+.tbdiv{width:1px;height:17px;background:var(--s2);margin:0 2px;flex-shrink:0}
+.eb{outline:none;min-height:440px;font-size:15.5px;line-height:1.8;color:var(--k7);caret-color:var(--teal)}
+.eb:empty::before{content:'Start writing…';color:var(--s3);pointer-events:none}
+.eb h1{font-size:25px;font-weight:700;margin:22px 0 9px;color:var(--k9)}.eb h2{font-size:19px;font-weight:600;margin:18px 0 7px;color:var(--k9)}.eb h3{font-size:16px;font-weight:600;margin:14px 0 5px;color:var(--k7)}
+.eb p{margin:0 0 8px}.eb ul,.eb ol{padding-left:1.5em;margin:0 0 9px}.eb li{margin:3px 0}
+.eb table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;border:1px solid var(--s2)}
+.eb th{background:var(--s1);padding:8px 12px;text-align:left;font-weight:600;border:1px solid var(--s2);font-size:13px;color:var(--k7)}
+.eb td{padding:7px 12px;border:1px solid var(--s1);color:var(--k7)}
+.eb tr:nth-child(even) td{background:var(--bg)}
+.eb blockquote{border-left:3px solid var(--teal);padding:9px 16px;background:var(--teall);border-radius:0 var(--r) var(--r) 0;margin:12px 0;color:var(--teal);font-style:italic}
+.eb .callout{background:var(--ambl);border:1px solid #fde68a;border-radius:var(--r);padding:11px 15px;margin:12px 0}
+.eb .callout::before{content:'⚠️  '}
+.eb code{font-family:var(--mono);font-size:13px;background:var(--s1);padding:1px 5px;border-radius:4px;border:1px solid var(--s2)}
+.eb pre{background:var(--k9);color:#a8d8c8;padding:16px;border-radius:var(--rl);overflow-x:auto;margin:12px 0;font-family:var(--mono);font-size:13px}
+.eb a{color:var(--teal);text-decoration:underline;text-underline-offset:2px}
+.eb hr{border:none;border-top:1px solid var(--s2);margin:18px 0}
+.eb img{max-width:100%;border-radius:var(--r);margin:8px 0}
+
+/* ── FIREBASE SYNC ── */
+.sync-bar{position:fixed;bottom:0;left:0;right:0;height:32px;background:var(--k9);display:flex;align-items:center;padding:0 20px;gap:10px;z-index:500;font-size:12px;color:rgba(255,255,255,.7);transition:background .3s}
+.sync-bar.saving{background:#0f4c40}
+.sync-bar.error{background:#7f1d1d}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0}
+.sync-dot.pulse{animation:sdpulse 1s ease-in-out infinite}
+@keyframes sdpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.sync-dot.off{background:#ef4444}
+.sync-dot.warn{background:var(--amber)}
+.sync-label{flex:1}
+.sync-users{font-size:11px;color:rgba(255,255,255,.45)}
+
+/* Setup overlay */
+.setup-ov{position:fixed;inset:0;background:rgba(26,24,20,.85);z-index:600;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.setup-ov.hid{display:none}
+.setup-box{background:var(--surf);border-radius:var(--rxl);width:520px;max-width:94vw;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.setup-title{font-size:20px;font-weight:700;color:var(--k9);margin-bottom:6px}
+.setup-sub{font-size:14px;color:var(--k3);margin-bottom:24px;line-height:1.6}
+.setup-step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
+.setup-sn{width:26px;height:26px;border-radius:50%;background:var(--k9);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.setup-st{font-size:13.5px;color:var(--k5);line-height:1.6}
+.setup-st strong{color:var(--k9);font-weight:600}
+.setup-st a{color:var(--teal);text-decoration:none}
+.setup-st a:hover{text-decoration:underline}
+.setup-st code{font-family:var(--mono);font-size:12px;background:var(--s1);padding:1px 6px;border-radius:4px;border:1px solid var(--s2)}
+.setup-inp{width:100%;border:1.5px solid var(--s2);border-radius:var(--r);padding:10px 13px;font-family:var(--fn);font-size:13.5px;color:var(--k9);outline:none;transition:border-color var(--ease);margin-top:6px;font-family:var(--mono)}
+.setup-inp:focus{border-color:var(--teal)}
+.setup-inp::placeholder{color:var(--s3);font-family:var(--fn)}
+.setup-save{width:100%;margin-top:18px;background:var(--teal);border:none;color:#fff;padding:12px;border-radius:var(--r);font-family:var(--fn);font-size:14px;font-weight:600;cursor:pointer;transition:var(--ease)}
+.setup-save:hover{background:var(--tealm)}
+.setup-skip{width:100%;margin-top:8px;background:none;border:1px solid var(--s2);color:var(--k3);padding:10px;border-radius:var(--r);font-family:var(--fn);font-size:13px;cursor:pointer;transition:var(--ease)}
+.setup-skip:hover{background:var(--s1)}
+.setup-note{font-size:12px;color:var(--k2);text-align:center;margin-top:10px;line-height:1.5}
+
+/* ── EDIT MODE ── */
+.edit-mode-bar{position:sticky;top:0;z-index:30;background:#1a1814;color:#fff;padding:9px 48px;margin:0 -48px 0;display:none;align-items:center;gap:10px;font-size:13px}
+.edit-mode-bar.vis{display:flex}
+.emb-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.emb-lbl{flex:1;color:rgba(255,255,255,.75);font-size:12.5px}
+.emb-lbl strong{color:#fff}
+.emb-save{background:var(--teal);border:none;color:#fff;padding:6px 14px;border-radius:var(--r);font-family:var(--fn);font-size:13px;font-weight:600;cursor:pointer;transition:var(--ease)}
+.emb-save:hover{background:var(--tealm)}
+.emb-dis{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.65);padding:6px 11px;border-radius:var(--r);font-family:var(--fn);font-size:13px;cursor:pointer;transition:var(--ease)}
+.emb-dis:hover{background:rgba(255,255,255,.18);color:#fff}
+.edit-tog{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r);font-size:12.5px;font-family:var(--fn);cursor:pointer;transition:var(--ease);border:1.5px solid var(--teal);color:var(--teal);background:var(--teall);font-weight:600}
+.edit-tog:hover{background:var(--teal);color:#fff}
+.edit-tog.on{background:var(--teal);color:#fff}
+.edit-tog.on:hover{background:var(--tealm)}
+.toolbar.hidden{display:none}
+.eb.emode{outline:2px solid rgba(15,120,112,.28);border-radius:var(--r);padding:8px;margin:-8px}
+.eb.vmode{caret-color:transparent;pointer-events:none}
+.ptit.emode{outline:2px solid rgba(15,120,112,.22);border-radius:6px;padding:3px 7px;margin:-3px -7px}
+.ptit.vmode{pointer-events:none}
+.udot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:5px;vertical-align:middle}
+.tag-x{cursor:pointer;margin-left:3px;opacity:.55;font-size:10px;line-height:1}
+.tag-x:hover{opacity:1;color:var(--rose)}
+.tag-addinp{border:1px dashed var(--s3);border-radius:99px;padding:2px 9px;font-size:11px;font-family:var(--fn);color:var(--k5);outline:none;width:80px;transition:border-color var(--ease);background:transparent}
+.tag-addinp:focus{border-color:var(--teal);border-style:solid}
+.pa-btn{background:none;border:1px solid var(--s2);border-radius:var(--r);padding:5px 10px;font-size:12.5px;color:var(--k3);font-family:var(--fn);cursor:pointer;transition:var(--ease);display:inline-flex;align-items:center;gap:4px}
+.pa-btn:hover{background:var(--s1);color:var(--k7)}
+.pa-btn.del:hover{background:var(--rosel);color:var(--rose);border-color:var(--rose)}
+.del-box{background:var(--rosel);border:1px solid #fca5a5;border-radius:var(--rl);padding:14px 18px;margin-top:16px;display:none}
+.del-box.show{display:block}
+.del-box p{font-size:13.5px;color:#991b1b;margin-bottom:11px;font-weight:500}
+.del-box-btns{display:flex;gap:8px}
+
+/* ── COMMENTS ── */
+.cpc{width:0;overflow:hidden;transition:width var(--ease);background:var(--surf);border-left:1px solid var(--s2);flex-shrink:0}
+.cpc.op{width:272px}
+.cpin{width:272px;padding:17px 14px;height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.cptit{font-size:14px;font-weight:600;color:var(--k7);padding-bottom:8px;border-bottom:1px solid var(--s1)}
+.cc{background:var(--s1);border:1px solid var(--s2);border-radius:var(--r);padding:11px}
+.cch{display:flex;justify-content:space-between;margin-bottom:4px}
+.cca{font-size:12px;font-weight:600}.cct{font-size:11px;color:var(--k2)}.cctx{font-size:13px;color:var(--k5);line-height:1.5}
+.ccin{width:100%;border:1px solid var(--s2);border-radius:var(--r);padding:7px 9px;font-family:var(--fn);font-size:13px;resize:none;outline:none;transition:border-color var(--ease)}
+.ccin:focus{border-color:var(--teal)}
+.ccsub{width:100%;margin-top:6px;background:var(--teal);border:none;color:#fff;padding:7px;border-radius:var(--r);font-family:var(--fn);font-size:13px;cursor:pointer;font-weight:500;transition:var(--ease)}
+.ccsub:hover{background:var(--tealm)}
+
+/* ── SEARCH OVERLAY ── */
+.ov{position:fixed;inset:0;background:rgba(26,24,20,.52);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:68px;backdrop-filter:blur(2px)}
+.ov.hid{display:none}
+.sbox{background:var(--surf);border-radius:var(--rxl);width:600px;max-width:94vw;box-shadow:var(--shc);overflow:hidden}
+.st2{display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--s1)}
+.sic{font-size:16px;opacity:.5}
+.sf{flex:1;border:none;outline:none;font-family:var(--fn);font-size:16px;color:var(--k9);background:transparent}
+.sf::placeholder{color:var(--s3)}
+.sesc{font-size:10px;color:var(--k2);background:var(--s1);border:1px solid var(--s2);padding:1px 5px;border-radius:3px;font-family:var(--mono)}
+.fbar{display:flex;gap:5px;padding:7px 14px;border-bottom:1px solid var(--s1);flex-wrap:wrap}
+.fc{padding:3px 10px;border-radius:99px;font-size:12px;font-family:var(--fn);border:1px solid var(--s2);background:none;color:var(--k3);cursor:pointer;transition:var(--ease)}
+.fc:hover{border-color:var(--teal);color:var(--teal)}.fc.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.sres{max-height:360px;overflow-y:auto}
+.sri2{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background var(--ease)}
+.sri2:hover{background:var(--bg)}
+.srem{font-size:18px;width:26px;text-align:center}.srtit{font-size:14px;font-weight:500;color:var(--k7)}.srpt{font-size:11px;color:var(--k2)}
+.semp{padding:28px;text-align:center;color:var(--k2);font-size:14px}
+.stip{padding:8px 16px;font-size:11.5px;color:var(--k2);border-top:1px solid var(--s1)}
+
+/* ═══════════════════════════════════
+   IMPORT WIZARD - the main new feature
+   ═══════════════════════════════════ */
+.imp-modal{background:var(--surf);border-radius:var(--rxl);width:680px;max-width:96vw;box-shadow:var(--shc);overflow:hidden;display:flex;flex-direction:column;max-height:90vh}
+.imp-header{padding:18px 22px 14px;border-bottom:1px solid var(--s1);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.imp-title{font-size:17px;font-weight:700;color:var(--k9)}
+.imp-sub{font-size:13px;color:var(--k3);margin-top:2px}
+.imp-close{background:none;border:none;font-size:20px;color:var(--k3);cursor:pointer;padding:2px 6px;border-radius:5px;transition:var(--ease);line-height:1}
+.imp-close:hover{background:var(--s1);color:var(--k9)}
+
+/* Steps indicator */
+.imp-steps{display:flex;align-items:center;padding:12px 22px;border-bottom:1px solid var(--s1);gap:0;flex-shrink:0}
+.step-item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--k2);flex:1}
+.step-item.done{color:var(--grn)}.step-item.active{color:var(--k9);font-weight:600}
+.step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step-item.done .step-num{background:var(--grn);border-color:var(--grn);color:#fff}
+.step-item.active .step-num{background:var(--teal);border-color:var(--teal);color:#fff}
+.step-line{flex:1;height:1px;background:var(--s2);margin:0 6px}
+.step-item:last-child{flex:initial}
+
+/* Step 1 - drop zone */
+.imp-body{flex:1;overflow-y:auto;padding:20px 22px}
+
+.drop-area{border:2px dashed var(--s3);border-radius:var(--rxl);padding:0;text-align:center;cursor:pointer;transition:var(--ease);position:relative;overflow:hidden}
+.drop-area:hover,.drop-area.drag{border-color:var(--teal);background:var(--teall)}
+.drop-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.da-inner{padding:36px 20px;pointer-events:none}
+.da-icon{font-size:48px;margin-bottom:12px;line-height:1}
+.da-title{font-size:16px;font-weight:600;color:var(--k7);margin-bottom:5px}
+.da-sub{font-size:13px;color:var(--k3)}
+.fmt-grid{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.fmt-card{background:var(--surf);border:1px solid var(--s2);border-radius:var(--rl);padding:10px 16px;display:flex;align-items:center;gap:8px;pointer-events:none}
+.fmt-card .ficon{font-size:22px}
+.fmt-card .finfo{text-align:left}
+.fmt-card .fname{font-size:12.5px;font-weight:600;color:var(--k7)}
+.fmt-card .fdesc{font-size:11px;color:var(--k3)}
+
+/* Parsing progress */
+.parse-box{text-align:center;padding:20px 0}
+.parse-spinner{width:44px;height:44px;border:3px solid var(--s2);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.parse-status{font-size:14px;font-weight:500;color:var(--k7)}
+.parse-detail{font-size:12.5px;color:var(--k3);margin-top:4px}
+.parse-pbar{height:5px;background:var(--s2);border-radius:99px;overflow:hidden;margin:14px 0 0}
+.parse-fill{height:100%;background:var(--teal);border-radius:99px;transition:width .3s ease;width:0%}
+.parse-log{margin-top:12px;background:var(--k9);border-radius:var(--r);padding:10px 12px;max-height:100px;overflow-y:auto;text-align:left}
+.parse-log span{display:block;font-family:var(--mono);font-size:11px;color:#7ecfc0;line-height:1.8}
+
+/* Step 2 - configure */
+.cfg-row{display:flex;gap:16px;margin-bottom:14px}
+.cfg-half{flex:1}
+.fl{font-size:12px;font-weight:600;color:var(--k3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:block}
+.fi{width:100%;border:1px solid var(--s2);border-radius:var(--r);padding:8px 11px;font-family:var(--fn);font-size:14px;color:var(--k9);outline:none;transition:border-color var(--ease);background:var(--surf)}
+.fi:focus{border-color:var(--teal)}
+.eg{display:flex;gap:7px;flex-wrap:wrap}
+.eo2{width:36px;height:36px;border-radius:7px;border:1.5px solid var(--s2);background:var(--bg);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.eo2:hover{border-color:var(--teal);background:var(--teall)}
+.eo2.sel{border-color:var(--teal);background:var(--teall)}
+
+/* Step 3 - preview */
+.prev-wrap{border:1px solid var(--s2);border-radius:var(--rl);overflow:hidden}
+.prev-toolbar{padding:8px 14px;background:var(--s1);border-bottom:1px solid var(--s2);display:flex;align-items:center;justify-content:space-between}
+.prev-label{font-size:12px;font-weight:600;color:var(--k3);text-transform:uppercase;letter-spacing:.07em}
+.prev-badges{display:flex;gap:6px}
+.prev-content{padding:20px;max-height:340px;overflow-y:auto;font-size:14px;line-height:1.75;color:var(--k7)}
+.prev-content h1{font-size:20px;font-weight:700;margin:16px 0 8px;color:var(--k9)}
+.prev-content h2{font-size:17px;font-weight:600;margin:14px 0 6px;color:var(--k9)}
+.prev-content h3{font-size:15px;font-weight:600;margin:12px 0 5px}
+.prev-content p{margin:0 0 7px}
+.prev-content ul,.prev-content ol{padding-left:1.5em;margin:0 0 8px}
+.prev-content li{margin:2px 0}
+.prev-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;border:1px solid var(--s2)}
+.prev-content th{background:var(--s1);padding:7px 10px;border:1px solid var(--s2);font-weight:600;font-size:12px}
+.prev-content td{padding:6px 10px;border:1px solid var(--s1)}
+.prev-content blockquote{border-left:3px solid var(--teal);padding:8px 14px;background:var(--teall);border-radius:0 var(--r) var(--r) 0;margin:10px 0;color:var(--teal);font-style:italic}
+.prev-content .callout{background:var(--ambl);border:1px solid #fde68a;border-radius:var(--r);padding:10px 14px;margin:10px 0;font-size:13px}
+.prev-content code{font-family:var(--mono);font-size:12px;background:var(--s1);padding:1px 5px;border-radius:4px;border:1px solid var(--s2)}
+.prev-content a{color:var(--teal)}
+
+.imp-stats{display:flex;gap:12px;margin-bottom:14px}
+.stat-pill{background:var(--s1);border:1px solid var(--s2);border-radius:var(--r);padding:7px 12px;display:flex;align-items:center;gap:7px;font-size:13px;color:var(--k5)}
+.stat-pill span:first-child{font-size:16px}
+.stat-pill strong{color:var(--k9)}
+
+/* Footer */
+.imp-footer{padding:14px 22px;border-top:1px solid var(--s1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surf)}
+.imp-footer-left{font-size:12.5px;color:var(--k3)}
+
+/* Export */
+.exdd{position:absolute;top:calc(100% + 4px);right:0;background:var(--surf);border:1px solid var(--s2);border-radius:var(--rl);box-shadow:var(--shb);z-index:100;min-width:185px;overflow:hidden;opacity:0;transform:translateY(-5px);pointer-events:none;transition:var(--ease)}
+.exdd.op{opacity:1;transform:translateY(0);pointer-events:all}
+.exi{display:flex;align-items:center;gap:8px;padding:9px 13px;cursor:pointer;font-size:13px;color:var(--k7);transition:background var(--ease)}
+.exi:hover{background:var(--bg)}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--k9);color:#fff;padding:10px 16px;border-radius:var(--rl);font-size:13.5px;z-index:400;display:flex;align-items:center;gap:7px;opacity:0;transform:translateY(7px);transition:var(--ease);pointer-events:none;box-shadow:var(--shb)}
+.toast.sh{opacity:1;transform:translateY(0)}
+
+/* Imported pages badge */
+.imp-page-tag{font-size:10px;font-weight:700;background:linear-gradient(90deg,var(--ind),var(--teal));color:#fff;padding:1px 7px;border-radius:99px;margin-left:4px;vertical-align:middle}
+
+@media(max-width:900px){.sgrid{grid-template-columns:1fr 1fr}.dg2{grid-template-columns:1fr}}
+@media(max-width:640px){
+  #sb{width:56px;min-width:56px}
+  #sb .lbl,#sb .wn,#sb .sec,#sb .nbt,#sb .nbg,#sb .nar{opacity:0;width:0;overflow:hidden;pointer-events:none}
+  .eo{padding:20px 18px 56px}.toolbar{margin:0 -18px 16px;padding:6px 18px}
+  .dash{padding:20px 16px 48px}.sgrid{grid-template-columns:1fr}
+  .tbr .btn:not(.btnimport):not(.btnp):not(.avc){display:none}
+  .imp-modal{width:98vw}.cfg-row{flex-direction:column}
+}
+@media print{#sb,#topbar,.toolbar,.cpc{display:none!important}#main{overflow:visible}.eo{padding:20px;max-width:100%}body{overflow:visible;height:auto}}
+/* Landing card sub-groups */
+.lgroup{border-bottom:1px solid var(--s1)}
+.lgroup:last-of-type{border-bottom:none}
+.lgroup-head{display:flex;align-items:center;gap:11px;padding:11px 20px;cursor:pointer;transition:background .12s;user-select:none}
+.lgroup-head:hover{background:var(--bg)}
+.lgroup-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#eef2ff;flex-shrink:0}
+.lcard-sop .lgroup-icon{background:#e8f5f3}
+.lcard-training .lgroup-icon{background:#dcfce7}
+.lcard-faq .lgroup-icon{background:#fef3c7}
+.lgroup-info{flex:1;min-width:0}
+.lgroup-name{font-size:13.5px;font-weight:600;color:var(--k7)}
+.lgroup-meta{font-size:11.5px;color:var(--k2);margin-top:1px}
+.lgroup-arr{font-size:16px;color:var(--k2);transition:transform .18s;flex-shrink:0;font-weight:300}
+.lgroup.open .lgroup-arr{transform:rotate(90deg);color:var(--lcard-color,var(--teal))}
+.lgroup-children{max-height:0;overflow:hidden;transition:max-height .28s cubic-bezier(.4,0,.2,1);background:var(--bg)}
+.lgroup.open .lgroup-children{max-height:400px}
+.lchild-sub{padding-left:28px;border-bottom:1px solid var(--s1)}
+.lchild-sub:last-child{border-bottom:none}
+.lchild-sub .lchild-icon{width:26px;height:26px;font-size:13px;border-radius:6px}
+.lchild-sub .lchild-name{font-size:13px}
+
+/* ═══ LANDING PAGE ═══ */
+.landing{padding:0;min-height:calc(100vh - 52px);background:var(--bg);display:flex;flex-direction:column}
+.landing-hero{background:var(--k9);padding:36px 40px 32px;position:relative;overflow:hidden}
+.landing-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(15,120,112,.35) 0%,transparent 65%);pointer-events:none}
+.lh-greeting{font-size:13px;font-weight:500;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.lh-title{font-size:32px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px}
+.lh-sub{font-size:15px;color:rgba(255,255,255,.55);margin-bottom:20px}
+.lh-stats{display:flex;gap:24px;flex-wrap:wrap}
+.lh-stat{display:flex;align-items:center;gap:8px}
+.lh-stat-val{font-size:22px;font-weight:700;color:#fff}
+.lh-stat-lbl{font-size:12px;color:rgba(255,255,255,.4);line-height:1.3}
+.lh-stat-div{width:1px;height:28px;background:rgba(255,255,255,.12)}
+
+/* 4 category cards */
+.landing-cards{padding:28px 32px 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1}
+.lcard{background:var(--surf);border:1px solid var(--s2);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);position:relative}
+.lcard:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(26,24,20,.12);border-color:var(--s3)}
+.lcard.open{border-color:var(--lcard-color,var(--teal));box-shadow:0 0 0 2px var(--lcard-color,var(--teal));transform:none}
+.lcard-top{padding:24px 22px 20px;position:relative}
+.lcard-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px;transition:transform .2s}
+.lcard:hover .lcard-icon{transform:scale(1.08)}
+.lcard-title{font-size:18px;font-weight:700;color:var(--k9);margin-bottom:4px}
+.lcard-desc{font-size:13px;color:var(--k3);line-height:1.55;margin-bottom:14px}
+.lcard-count{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.lcard-arrow{position:absolute;top:20px;right:18px;font-size:16px;color:var(--k2);transition:transform .22s}
+.lcard.open .lcard-arrow{transform:rotate(180deg);color:var(--lcard-color,var(--teal))}
+.lcard-divider{height:1px;background:var(--s1);margin:0 0 0}
+.lcard-children{max-height:0;overflow:hidden;transition:max-height .32s cubic-bezier(.4,0,.2,1)}
+.lcard.open .lcard-children{max-height:600px}
+.lchild{display:flex;align-items:center;gap:11px;padding:10px 20px;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .12s;text-decoration:none}
+.lchild:last-child{border-bottom:none}
+.lchild:hover{background:var(--bg)}
+.lchild-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.lchild-info{flex:1;min-width:0}
+.lchild-name{font-size:13.5px;font-weight:500;color:var(--k7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lchild-meta{font-size:11.5px;color:var(--k2);margin-top:1px}
+.lchild-arr{font-size:11px;color:var(--k2);flex-shrink:0;opacity:0;transition:opacity .12s}
+.lchild:hover .lchild-arr{opacity:1}
+.lcard-view-all{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;font-size:12.5px;font-weight:600;color:var(--lcard-color,var(--teal));cursor:pointer;transition:background .12s;border-top:1px solid var(--s1)}
+.lcard-view-all:hover{background:var(--bg)}
+
+/* Color themes per card */
+.lcard-scripts{--lcard-color:#4f46e5}
+.lcard-sop{--lcard-color:#0f7870}
+.lcard-training{--lcard-color:#16a34a}
+.lcard-faq{--lcard-color:#d97706}
+.lcard-scripts .lcard-icon{background:#eef2ff}
+.lcard-sop .lcard-icon{background:#e8f5f3}
+.lcard-training .lcard-icon{background:#dcfce7}
+.lcard-faq .lcard-icon{background:#fef3c7}
+.lcard-scripts .lcard-count{background:#eef2ff;color:#4f46e5}
+.lcard-sop .lcard-count{background:#e8f5f3;color:#0f7870}
+.lcard-training .lcard-count{background:#dcfce7;color:#16a34a}
+.lcard-faq .lcard-count{background:#fef3c7;color:#d97706}
+.lcard-scripts .lchild-icon{background:#eef2ff}
+.lcard-sop .lchild-icon{background:#e8f5f3}
+.lcard-training .lchild-icon{background:#dcfce7}
+.lcard-faq .lchild-icon{background:#fef3c7}
+.lcard-scripts.open{box-shadow:0 0 0 2px #4f46e5}
+.lcard-sop.open{box-shadow:0 0 0 2px #0f7870}
+.lcard-training.open{box-shadow:0 0 0 2px #16a34a}
+.lcard-faq.open{box-shadow:0 0 0 2px #d97706}
+
+/* recent strip below cards */
+.landing-recent{padding:0 32px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lr-widget{background:var(--surf);border:1px solid var(--s2);border-radius:var(--rxl);overflow:hidden}
+
+@media(max-width:1000px){.landing-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.landing-cards{grid-template-columns:1fr;padding:16px};.landing-hero{padding:24px 20px 20px}.lh-title{font-size:24px}.landing-recent{grid-template-columns:1fr;padding:0 16px 20px}}
+
+/* ══ SIDEBAR MANAGER ══ */
+.mgr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:flex-start;justify-content:flex-start;padding:0}
+.mgr-overlay.hid{display:none}
+.mgr-panel{width:420px;height:100vh;background:var(--surf);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,.15);overflow:hidden}
+.mgr-head{padding:16px 18px 12px;border-bottom:1px solid var(--s2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mgr-head-title{font-size:16px;font-weight:600;color:var(--k9)}
+.mgr-head-sub{font-size:12px;color:var(--k3);margin-top:2px}
+.mgr-close{background:none;border:none;font-size:18px;color:var(--k3);cursor:pointer;padding:4px 7px;border-radius:5px;transition:var(--ease);line-height:1}
+.mgr-close:hover{background:var(--s1);color:var(--k9)}
+.mgr-tabs{display:flex;border-bottom:1px solid var(--s2);flex-shrink:0}
+.mgr-tab{flex:1;padding:9px 8px;font-size:13px;color:var(--k3);background:none;border:none;cursor:pointer;font-family:var(--fn);border-bottom:2px solid transparent;transition:var(--ease);text-align:center}
+.mgr-tab:hover{color:var(--k9);background:var(--s1)}
+.mgr-tab.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
+.mgr-body{flex:1;overflow-y:auto;padding:16px 18px}
+.mgr-tab-panel{display:none}.mgr-tab-panel.on{display:block}
+
+/* Section row */
+.mgr-section{background:var(--surf);border:1px solid var(--s2);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.mgr-sec-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--s1);border-bottom:1px solid var(--s2)}
+.mgr-sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--k3);flex:1}
+.mgr-sec-rename{background:none;border:none;font-size:11px;color:var(--teal);cursor:pointer;font-family:var(--fn);padding:2px 6px;border-radius:4px}
+.mgr-sec-rename:hover{background:var(--teall)}
+.mgr-sec-del{background:none;border:none;font-size:12px;color:var(--k2);cursor:pointer;padding:2px 6px;border-radius:4px;transition:var(--ease)}
+.mgr-sec-del:hover{color:var(--rose);background:var(--rosel)}
+
+/* Dropdown item */
+.mgr-dd{margin:8px 10px;border:1px solid var(--s2);border-radius:var(--r);background:var(--surf)}
+.mgr-dd-head{display:flex;align-items:center;gap:7px;padding:8px 10px;cursor:pointer;user-select:none}
+.mgr-dd-head:hover{background:var(--s1)}
+.mgr-dd-icon{font-size:14px;flex-shrink:0}
+.mgr-dd-name{font-size:13px;font-weight:500;color:var(--k7);flex:1}
+.mgr-dd-count{font-size:10px;background:var(--s2);color:var(--k3);padding:1px 6px;border-radius:99px}
+.mgr-dd-actions{display:flex;gap:2px;margin-left:4px}
+.mgr-dd-btn{background:none;border:none;font-size:11px;color:var(--k2);cursor:pointer;padding:3px 6px;border-radius:4px;transition:var(--ease);font-family:var(--fn)}
+.mgr-dd-btn:hover{background:var(--s1);color:var(--k9)}
+.mgr-dd-btn.del:hover{background:var(--rosel);color:var(--rose)}
+.mgr-dd-body{padding:0 8px 8px;display:none}
+.mgr-dd-body.op{display:block}
+
+/* Subpage row */
+.mgr-sub{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:5px;margin-bottom:2px;background:var(--bg);border:1px solid var(--s1)}
+.mgr-sub-icon{font-size:13px;flex-shrink:0}
+.mgr-sub-name{font-size:12.5px;color:var(--k5);flex:1}
+.mgr-sub-del{background:none;border:none;font-size:11px;color:var(--k2);cursor:pointer;padding:2px 5px;border-radius:3px;transition:var(--ease)}
+.mgr-sub-del:hover{color:var(--rose);background:var(--rosel)}
+
+/* Add buttons */
+.mgr-add-sub{width:100%;margin-top:4px;background:none;border:1px dashed var(--s3);border-radius:5px;padding:5px;font-size:12px;color:var(--k3);cursor:pointer;font-family:var(--fn);transition:var(--ease)}
+.mgr-add-sub:hover{border-color:var(--teal);color:var(--teal);background:var(--teall)}
+.mgr-add-dd{width:100%;margin:8px 0 4px;background:none;border:1px dashed var(--s3);border-radius:var(--r);padding:7px;font-size:12.5px;color:var(--k3);cursor:pointer;font-family:var(--fn);transition:var(--ease)}
+.mgr-add-dd:hover{border-color:var(--teal);color:var(--teal);background:var(--teall)}
+.mgr-add-sec{width:100%;margin-top:10px;background:none;border:1px dashed var(--s3);border-radius:var(--rl);padding:10px;font-size:13px;color:var(--k3);cursor:pointer;font-family:var(--fn);transition:var(--ease)}
+.mgr-add-sec:hover{border-color:var(--teal);color:var(--teal);background:var(--teall)}
+
+/* Quick-add standalone page */
+.mgr-single{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--s2);border-radius:var(--r);margin-bottom:10px;background:var(--surf)}
+.mgr-single-icon{font-size:14px}
+.mgr-single-name{font-size:13px;color:var(--k7);flex:1}
+.mgr-single-del{background:none;border:none;font-size:11px;color:var(--k2);cursor:pointer;padding:3px 6px;border-radius:4px;transition:var(--ease);font-family:var(--fn)}
+.mgr-single-del:hover{background:var(--rosel);color:var(--rose)}
+
+/* Mini form in manager */
+.mgr-form{background:var(--teall);border:1px solid rgba(15,120,112,.2);border-radius:var(--r);padding:12px;margin-top:8px}
+.mgr-form-title{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:10px}
+.mgr-inp{width:100%;border:1px solid var(--s2);border-radius:var(--r);padding:7px 10px;font-family:var(--fn);font-size:13px;outline:none;background:var(--surf);color:var(--k9);margin-bottom:7px}
+.mgr-inp:focus{border-color:var(--teal)}
+.mgr-inp-row{display:flex;gap:6px;margin-bottom:7px}
+.mgr-inp-row .mgr-inp{margin-bottom:0;flex:1}
+.mgr-form-btns{display:flex;gap:6px;justify-content:flex-end}
+.mgr-btn-save{background:var(--teal);border:none;color:#fff;padding:6px 14px;border-radius:var(--r);font-family:var(--fn);font-size:12.5px;cursor:pointer;font-weight:500;transition:var(--ease)}
+.mgr-btn-save:hover{background:var(--tealm)}
+.mgr-btn-cancel{background:none;border:1px solid var(--s2);color:var(--k5);padding:6px 12px;border-radius:var(--r);font-family:var(--fn);font-size:12.5px;cursor:pointer;transition:var(--ease)}
+.mgr-btn-cancel:hover{background:var(--s1)}
+.mgr-emoji-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.mgr-em{width:30px;height:30px;border-radius:5px;border:1px solid var(--s2);background:var(--bg);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.mgr-em:hover,.mgr-em.s{border-color:var(--teal);background:var(--teall)}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sb">
+  <div class="sht">
+    <div class="slg">🎯</div>
+    <span class="wn">CX Knowledge Hub</span>
+    <button class="cob" onclick="togSB()">◀</button>
+  </div>
+  <div class="ssrch" onclick="openSearch()">
+    <div class="sri"><span style="font-size:13px;opacity:.5">🔍</span><span style="font-size:12.5px;color:rgba(255,255,255,.35);flex:1;white-space:nowrap" class="lbl">Search all docs…</span><span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.3);padding:1px 5px;border-radius:3px;font-family:var(--mono)">⌘K</span></div>
+  </div>
+  <nav class="nscr">
+    <div><button class="nb act" id="nb-dash" onclick="showDash(this)"><span class="ni">&#127968;</span><span class="lbl">Dashboard</span></button></div>
+
+    <span class="sec">Scripts</span>
+
+    <!-- 1. Inbound Service -->
+    <div>
+      <button class="nb" onclick="togNav(this,'inbound')">
+        <span class="ni">&#128222;</span><span class="lbl">1. Inbound Service</span><span class="nbg">4</span><span class="nar" id="ar-inbound">&#9654;</span>
+      </button>
+      <div class="nch" id="ch-inbound">
+        <button class="nb" onclick="goPage('inbound-internet',this)"><span class="ni">&#127760;</span><span class="lbl">a. Internet Supply Down</span></button>
+        <button class="nb" onclick="goPage('inbound-rdni',this)"><span class="ni">&#128225;</span><span class="lbl">b. RDNI</span></button>
+        <button class="nb" onclick="goPage('inbound-recovery',this)"><span class="ni">&#128260;</span><span class="lbl">c. Recovery</span></button>
+        <button class="nb" onclick="goPage('inbound-renewal',this)"><span class="ni">&#128203;</span><span class="lbl">d. Help in Renewal</span></button>
+      </div>
+    </div>
+
+    <!-- 2. Sales and Status -->
+    <div>
+      <button class="nb" onclick="togNav(this,'sales')">
+        <span class="ni">&#128188;</span><span class="lbl">2. Sales and Status</span><span class="nbg">1</span><span class="nar" id="ar-sales">&#9654;</span>
+      </button>
+      <div class="nch" id="ch-sales">
+        <button class="nb" onclick="goPage('sales-enquiry',this)"><span class="ni">&#128221;</span><span class="lbl">a. Enquiry</span></button>
+      </div>
+    </div>
+
+    <!-- 3. Outbound Service -->
+    <div>
+      <button class="nb" onclick="goPage('outbound-service',this)">
+        <span class="ni">&#128228;</span><span class="lbl">3. Outbound Service</span>
+      </button>
+    </div>
+
+    <!-- 4. Router Recovery -->
+    <div>
+      <button class="nb" onclick="goPage('router-recovery',this)">
+        <span class="ni">&#128246;</span><span class="lbl">4. Router Recovery</span>
+      </button>
+    </div>
+
+    <span class="sec">Process &amp; Training</span>
+    <div>
+      <button class="nb" onclick="togNav(this,'sops')"><span class="ni">&#128193;</span><span class="lbl">SOPs</span><span class="nar" id="ar-sops">&#9654;</span></button>
+      <div class="nch" id="ch-sops">
+        <button class="nb" onclick="goPage('refund-sop',this)"><span class="ni">&#128176;</span><span class="lbl">Refund Authorization</span></button>
+        <button class="nb" onclick="goPage('escalation-sop',this)"><span class="ni">&#11014;&#65039;</span><span class="lbl">Escalation SOP</span></button>
+      </div>
+    </div>
+    <div><button class="nb" onclick="goPage('training',this)"><span class="ni">&#127891;</span><span class="lbl">Training Materials</span></button></div>
+
+    <span class="sec">Reference</span>
+    <div><button class="nb" onclick="goPage('faqs',this)"><span class="ni">&#10067;</span><span class="lbl">FAQs &amp; Edge Cases</span></button></div>
+    <div><button class="nb" onclick="goPage('ticket-guide',this)"><span class="ni">&#127915;</span><span class="lbl">Ticket Handling</span></button></div>
+    <div id="imported-nav"></div>
+  </nav>
+  <div class="sft">
+    <button class="impbtn" onclick="openImport()">⬆️ <span class="nbt">Import Document</span></button>
+    <button class="impbtn sec2" onclick="openNP()">✚ <span class="nbt">New blank page</span></button>
+    <button class="impbtn sec2" onclick="openSidebarMgr()" style="margin-top:2px">⚙️ <span class="nbt">Manage Sidebar</span></button>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+  <header id="topbar">
+    <nav class="bc" id="bc">
+      <span onclick="showDash(null)">CX Hub</span>
+      <span class="bcs">›</span>
+      <span class="bcc">Dashboard</span>
+    </nav>
+    <div class="tbr">
+      <button class="btn" onclick="openSearch()">🔍 Search</button>
+      <button class="btn btnimport" onclick="openImport()">⬆️ Import Doc</button>
+      <button class="edit-tog" id="edit-tog-btn" style="display:none" onclick="toggleEditMode()">✏️ Edit</button>
+      <button class="pa-btn del" id="del-pg-btn" style="display:none" onclick="deletePage()">🗑️ Delete</button>
+      <button class="btn" onclick="togComments()">💬 Comments</button>
+      <div style="position:relative">
+        <button class="btn btnp" onclick="togEx(this)">⬇ Export ▾</button>
+        <div class="exdd" id="exdd">
+          <div class="exi" onclick="doEx('md')">📝 Export as Markdown</div>
+          <div class="exi" onclick="doEx('pdf')">📄 Export as PDF</div>
+          <div class="exi" onclick="doEx('txt')">📃 Export as Text</div>
+          <div class="exi" onclick="bulkEx()">📦 Bulk export all</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="ca">
+    <div class="ms" id="ms">
+
+      <!-- DASHBOARD / LANDING -->
+      <div id="vdash">
+        <div class="landing">
+
+          <!-- Hero header -->
+          <div class="landing-hero">
+            <div class="lh-title">CX Knowledge Hub</div>
+            <div class="lh-sub">Your team's single source of truth — scripts, SOPs, training and FAQs</div>
+            <div class="lh-stats">
+              <div class="lh-stat"><div class="lh-stat-val" id="ls-scripts">7</div><div class="lh-stat-lbl">Active<br>Scripts</div></div>
+              <div class="lh-stat-div"></div>
+              <div class="lh-stat"><div class="lh-stat-val" id="ls-sops">5</div><div class="lh-stat-lbl">SOPs &<br>Processes</div></div>
+              <div class="lh-stat-div"></div>
+              <div class="lh-stat"><div class="lh-stat-val" id="ls-training">3</div><div class="lh-stat-lbl">Training<br>Modules</div></div>
+              <div class="lh-stat-div"></div>
+              <div class="lh-stat"><div class="lh-stat-val" id="ls-faqs">2</div><div class="lh-stat-lbl">FAQ<br>Guides</div></div>
+            </div>
+          </div>
+
+          <!-- 4 Big Category Cards -->
+          <div class="landing-cards">
+
+            <!-- SCRIPTS CARD -->
+            <div class="lcard lcard-scripts" id="lcard-scripts" onclick="toggleLcard('scripts')">
+              <div class="lcard-top">
+                <div class="lcard-icon">📞</div>
+                <div class="lcard-title">Scripts</div>
+                <div class="lcard-desc">Call scripts for inbound, outbound, sales and service recovery</div>
+                <span class="lcard-count">7 scripts</span>
+                <span class="lcard-arrow">▼</span>
+              </div>
+              <div class="lcard-divider"></div>
+              <div class="lcard-children" id="lcc-scripts">
+
+  <!-- Group: Inbound Service -->
+  <div class="lgroup" id="lg-inbound">
+    <div class="lgroup-head" onclick="event.stopPropagation();toggleLgroup('inbound')">
+      <div class="lgroup-icon">📞</div>
+      <div class="lgroup-info">
+        <div class="lgroup-name">1. Inbound Service</div>
+        <div class="lgroup-meta">4 scripts</div>
+      </div>
+      <span class="lgroup-arr" id="lga-inbound">›</span>
+    </div>
+    <div class="lgroup-children" id="lgc-inbound">
+      <div class="lchild lchild-sub" onclick="event.stopPropagation();goPage('inbound-internet',null)"><div class="lchild-icon">🌐</div><div class="lchild-info"><div class="lchild-name">a. Internet Supply Down</div></div><span class="lchild-arr">→</span></div>
+      <div class="lchild lchild-sub" onclick="event.stopPropagation();goPage('inbound-rdni',null)"><div class="lchild-icon">📡</div><div class="lchild-info"><div class="lchild-name">b. RDNI</div></div><span class="lchild-arr">→</span></div>
+      <div class="lchild lchild-sub" onclick="event.stopPropagation();goPage('inbound-recovery',null)"><div class="lchild-icon">🔄</div><div class="lchild-info"><div class="lchild-name">c. Recovery</div></div><span class="lchild-arr">→</span></div>
+      <div class="lchild lchild-sub" onclick="event.stopPropagation();goPage('inbound-renewal',null)"><div class="lchild-icon">📋</div><div class="lchild-info"><div class="lchild-name">d. Help in Renewal</div></div><span class="lchild-arr">→</span></div>
+    </div>
+  </div>
+
+  <!-- Group: Sales and Status -->
+  <div class="lgroup" id="lg-sales">
+    <div class="lgroup-head" onclick="event.stopPropagation();toggleLgroup('sales')">
+      <div class="lgroup-icon">💼</div>
+      <div class="lgroup-info">
+        <div class="lgroup-name">2. Sales and Status</div>
+        <div class="lgroup-meta">1 script</div>
+      </div>
+      <span class="lgroup-arr" id="lga-sales">›</span>
+    </div>
+    <div class="lgroup-children" id="lgc-sales">
+      <div class="lchild lchild-sub" onclick="event.stopPropagation();goPage('sales-enquiry',null)"><div class="lchild-icon">📝</div><div class="lchild-info"><div class="lchild-name">a. Enquiry</div></div><span class="lchild-arr">→</span></div>
+    </div>
+  </div>
+
+  <!-- Standalone: Outbound Service -->
+  <div class="lchild" onclick="event.stopPropagation();goPage('outbound-service',null)">
+    <div class="lchild-icon">📤</div>
+    <div class="lchild-info">
+      <div class="lchild-name">3. Outbound Service</div>
+      <div class="lchild-meta">Script</div>
+    </div>
+    <span class="lchild-arr">→</span>
+  </div>
+
+  <!-- Standalone: Router Recovery -->
+  <div class="lchild" onclick="event.stopPropagation();goPage('router-recovery',null)">
+    <div class="lchild-icon">📶</div>
+    <div class="lchild-info">
+      <div class="lchild-name">4. Router Recovery</div>
+      <div class="lchild-meta">Script</div>
+    </div>
+    <span class="lchild-arr">→</span>
+  </div>
+
+</div>
+            </div>
+
+            <!-- SOP CARD -->
+            <div class="lcard lcard-sop" id="lcard-sop" onclick="toggleLcard('sop')">
+              <div class="lcard-top">
+                <div class="lcard-icon">📁</div>
+                <div class="lcard-title">SOPs</div>
+                <div class="lcard-desc">Standard operating procedures, escalation flows and process guides</div>
+                <span class="lcard-count">5 documents</span>
+                <span class="lcard-arrow">▼</span>
+              </div>
+              <div class="lcard-divider"></div>
+              <div class="lcard-children" id="lcc-sop">
+                <div class="lchild" onclick="event.stopPropagation();goPage('refund-sop',null)"><div class="lchild-icon">💰</div><div class="lchild-info"><div class="lchild-name">Refund Authorization</div><div class="lchild-meta">Billing Process</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('escalation-sop',null)"><div class="lchild-icon">⬆️</div><div class="lchild-info"><div class="lchild-name">Escalation Procedure</div><div class="lchild-meta">L1 → L2 → L3</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('ticket-guide',null)"><div class="lchild-icon">🎫</div><div class="lchild-info"><div class="lchild-name">Ticket Handling Guide</div><div class="lchild-meta">Zendesk Workflow</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('billing-script',null)"><div class="lchild-icon">💳</div><div class="lchild-info"><div class="lchild-name">Billing Enquiry</div><div class="lchild-meta">Billing Process</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('retention-script',null)"><div class="lchild-icon">🤝</div><div class="lchild-info"><div class="lchild-name">Retention & Cancellation</div><div class="lchild-meta">Retention Process</div></div><span class="lchild-arr">→</span></div>
+              </div>
+            </div>
+
+            <!-- TRAINING CARD -->
+            <div class="lcard lcard-training" id="lcard-training" onclick="toggleLcard('training')">
+              <div class="lcard-top">
+                <div class="lcard-icon">🎓</div>
+                <div class="lcard-title">Training</div>
+                <div class="lcard-desc">Onboarding guides, product knowledge and agent development materials</div>
+                <span class="lcard-count">3 modules</span>
+                <span class="lcard-arrow">▼</span>
+              </div>
+              <div class="lcard-divider"></div>
+              <div class="lcard-children" id="lcc-training">
+                <div class="lchild" onclick="event.stopPropagation();goPage('training',null)"><div class="lchild-icon">📚</div><div class="lchild-info"><div class="lchild-name">Training Materials Hub</div><div class="lchild-meta">New hire onboarding path</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('tech-support',null)"><div class="lchild-icon">🔧</div><div class="lchild-info"><div class="lchild-name">Tech Support Walkthrough</div><div class="lchild-meta">Technical troubleshooting</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('l2-scripts',null)"><div class="lchild-icon">📋</div><div class="lchild-info"><div class="lchild-name">L2 Escalation Scripts</div><div class="lchild-meta">Advanced handling</div></div><span class="lchild-arr">→</span></div>
+              </div>
+            </div>
+
+            <!-- FAQ CARD -->
+            <div class="lcard lcard-faq" id="lcard-faq" onclick="toggleLcard('faq')">
+              <div class="lcard-top">
+                <div class="lcard-icon">❓</div>
+                <div class="lcard-title">FAQs</div>
+                <div class="lcard-desc">Common questions, edge cases and quick reference answers for agents</div>
+                <span class="lcard-count">2 guides</span>
+                <span class="lcard-arrow">▼</span>
+              </div>
+              <div class="lcard-divider"></div>
+              <div class="lcard-children" id="lcc-faq">
+                <div class="lchild" onclick="event.stopPropagation();goPage('faqs',null)"><div class="lchild-icon">❓</div><div class="lchild-info"><div class="lchild-name">FAQs & Edge Cases</div><div class="lchild-meta">24 common questions</div></div><span class="lchild-arr">→</span></div>
+                <div class="lchild" onclick="event.stopPropagation();goPage('l1-scripts',null)"><div class="lchild-icon">📞</div><div class="lchild-info"><div class="lchild-name">L1 Scripts Index</div><div class="lchild-meta">Quick reference guide</div></div><span class="lchild-arr">→</span></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Recent activity strip -->
+          <div class="landing-recent">
+            <div class="lr-widget">
+              <div class="wgh"><span class="wgt">🕐 Recently Updated</span></div>
+              <div id="recent-list">
+                <div class="dr" onclick="goPage('inbound-internet',null)"><div class="deb">🌐</div><div class="di"><div class="dn">Internet Supply Down</div><div class="dm">Today · Alex C.</div></div><span class="tp tsc">Script</span></div>
+                <div class="dr" onclick="goPage('router-recovery',null)"><div class="deb">📶</div><div class="di"><div class="dn">Router Recovery</div><div class="dm">Today · Alex C.</div></div><span class="tp tsc">Script</span></div>
+                <div class="dr" onclick="goPage('refund-sop',null)"><div class="deb">💰</div><div class="di"><div class="dn">Refund Authorization SOP</div><div class="dm">Yesterday · Mike R.</div></div><span class="tp tso">SOP</span></div>
+                <div class="dr" onclick="goPage('faqs',null)"><div class="deb">❓</div><div class="di"><div class="dn">FAQs & Edge Cases</div><div class="dm">2 days ago · Sarah K.</div></div><span class="tp tfq">FAQ</span></div>
+              </div>
+            </div>
+            <div class="lr-widget">
+              <div class="wgh"><span class="wgt">👥 Team Activity</span></div>
+              <div class="dr"><div class="av" style="background:#8b5cf6;width:30px;height:30px;font-size:11px;border-radius:50%;flex-shrink:0">SK</div><div class="di"><div class="dn">Sarah edited Retention Script</div><div class="dm">2 hours ago</div></div></div>
+              <div class="dr"><div class="av" style="background:var(--grn);width:30px;height:30px;font-size:11px;border-radius:50%;flex-shrink:0">MR</div><div class="di"><div class="dn">Mike commented on Refund SOP</div><div class="dm">4 hours ago</div></div></div>
+              <div class="dr"><div class="av" style="background:var(--amber);width:30px;height:30px;font-size:11px;border-radius:50%;flex-shrink:0">JP</div><div class="di"><div class="dn">Jay uploaded Billing FAQs.pdf</div><div class="dm">Yesterday 3:45 PM</div></div></div>
+              <div class="dr"><div class="av" style="background:var(--rose);width:30px;height:30px;font-size:11px;border-radius:50%;flex-shrink:0">NL</div><div class="di"><div class="dn">Nina created Tech Triage Guide</div><div class="dm">Yesterday 11:20 AM</div></div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>        </div>
+      </div>
+
+      <!-- EDITOR VIEW -->
+      <div id="vedit" style="display:none;height:calc(100vh - 52px)">
+        <div style="display:flex;height:100%;overflow:hidden">
+          <div style="flex:1;overflow-y:auto"><div class="eo" id="eo"></div></div>
+          <div class="cpc" id="cpc">
+            <div class="cpin">
+              <div class="cptit">💬 Comments</div>
+              <div id="cplist">
+                <div class="cc"><div class="cch"><span class="cca">Sarah K.</span><span class="cct">2h ago</span></div><div class="cctx">The objection handling section needs updating based on Q3 pricing.</div></div>
+                <div class="cc"><div class="cch"><span class="cca">Mike R.</span><span class="cct">Yesterday</span></div><div class="cctx">Added compliance note per legal's request. Review before publishing.</div></div>
+              </div>
+              <textarea class="ccin" rows="3" placeholder="Add a comment…" id="ccin"></textarea>
+              <button class="ccsub" onclick="postCmt()">Post comment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SEARCH OVERLAY ═══ -->
+<div class="ov hid" id="sov" onclick="if(event.target===this)mClose('sov')">
+  <div class="sbox" onclick="event.stopPropagation()">
+    <div class="st2"><span class="sic">🔍</span><input class="sf" id="sinp" placeholder="Search all documents…" oninput="runS(this.value)"><span class="sesc">ESC</span></div>
+    <div class="fbar">
+      <button class="fc on" onclick="setF(this,'all')">All</button>
+      <button class="fc" onclick="setF(this,'scripts')">Scripts</button>
+      <button class="fc" onclick="setF(this,'sop')">SOPs</button>
+      <button class="fc" onclick="setF(this,'training')">Training</button>
+      <button class="fc" onclick="setF(this,'faq')">FAQs</button>
+      <button class="fc" onclick="setF(this,'imported')">📥 Imported</button>
+    </div>
+    <div class="sres" id="sres"></div>
+    <div class="stip">Tip: <kbd style="font-family:var(--mono);background:var(--s1);padding:1px 5px;border-radius:3px;border:1px solid var(--s2)">⌘K</kbd> opens search from anywhere</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     IMPORT WIZARD OVERLAY  (the main feature)
+     ═══════════════════════════════════════ -->
+<div class="ov hid" id="imp-ov" onclick="if(event.target===this)closeImport()">
+  <div class="imp-modal" onclick="event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="imp-header">
+      <div>
+        <div class="imp-title">📥 Import Document</div>
+        <div class="imp-sub" id="imp-sub-txt">Upload any file and it converts into a formatted knowledge page</div>
+      </div>
+      <button class="imp-close" onclick="closeImport()">✕</button>
+    </div>
+
+    <!-- Steps -->
+    <div class="imp-steps">
+      <div class="step-item active" id="step-1"><div class="step-num">1</div><span>Upload</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" id="step-2"><div class="step-num">2</div><span>Configure</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" id="step-3"><div class="step-num">3</div><span>Preview</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" id="step-4"><div class="step-num">4</div><span>Publish</span></div>
+    </div>
+
+    <!-- Body (swapped by JS) -->
+    <div class="imp-body" id="imp-body">
+
+      <!-- STEP 1: DROP ZONE -->
+      <div id="step-content-1">
+        <div class="drop-area" id="drop-area"
+             ondragover="dzOv(event)" ondragleave="dzLv()" ondrop="dzDp(event)">
+          <input type="file" id="file-inp"
+                 accept=".txt,.md,.csv,.docx,.doc,.html,.htm,.json"
+                 onchange="fileChosen(this.files[0])">
+          <div class="da-inner">
+            <div class="da-icon">📂</div>
+            <div class="da-title">Drop your file here, or <span style="color:var(--teal)">click to browse</span></div>
+            <div class="da-sub">Parsed entirely in your browser — nothing is uploaded to any server</div>
+            <div class="fmt-grid">
+              <div class="fmt-card"><span class="ficon">📝</span><div class="finfo"><div class="fname">TXT / Markdown</div><div class="fdesc">Headings, bullets, tables</div></div></div>
+              <div class="fmt-card"><span class="ficon">📄</span><div class="finfo"><div class="fname">DOCX / Word</div><div class="fdesc">Full formatting preserved</div></div></div>
+              <div class="fmt-card"><span class="ficon">📊</span><div class="finfo"><div class="fname">CSV / Data</div><div class="fdesc">Auto table with headers</div></div></div>
+              <div class="fmt-card"><span class="ficon">🌐</span><div class="finfo"><div class="fname">HTML</div><div class="fdesc">Structure preserved</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1b: PARSING IN PROGRESS -->
+      <div id="step-content-parsing" style="display:none">
+        <div class="parse-box">
+          <div class="parse-spinner" id="parse-spinner"></div>
+          <div class="parse-status" id="parse-status">Reading file…</div>
+          <div class="parse-detail" id="parse-detail">Detecting format</div>
+          <div class="parse-pbar"><div class="parse-fill" id="parse-fill"></div></div>
+          <div class="parse-log" id="parse-log"></div>
+        </div>
+      </div>
+
+      <!-- STEP 2: CONFIGURE -->
+      <div id="step-content-2" style="display:none">
+        <div style="margin-bottom:14px">
+          <label class="fl">Page icon</label>
+          <div class="eg" id="imp-eg">
+            <div class="eo2 sel" onclick="pEm(this,'📄')">📄</div>
+            <div class="eo2" onclick="pEm(this,'📋')">📋</div>
+            <div class="eo2" onclick="pEm(this,'📞')">📞</div>
+            <div class="eo2" onclick="pEm(this,'📁')">📁</div>
+            <div class="eo2" onclick="pEm(this,'🎓')">🎓</div>
+            <div class="eo2" onclick="pEm(this,'❓')">❓</div>
+            <div class="eo2" onclick="pEm(this,'🎫')">🎫</div>
+            <div class="eo2" onclick="pEm(this,'💡')">💡</div>
+            <div class="eo2" onclick="pEm(this,'⚙️')">⚙️</div>
+            <div class="eo2" onclick="pEm(this,'📊')">📊</div>
+          </div>
+        </div>
+        <div class="cfg-row">
+          <div class="cfg-half">
+            <label class="fl">Page title</label>
+            <input class="fi" type="text" id="imp-title" placeholder="e.g. Billing Script Q4">
+          </div>
+          <div class="cfg-half">
+            <label class="fl">Category</label>
+            <select class="fi" id="imp-cat">
+              <option value="scripts">Call Scripts</option>
+              <option value="sop" selected>SOP / Process</option>
+              <option value="training">Training</option>
+              <option value="faq">FAQ / Reference</option>
+              <option value="imported">Other / Imported</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="fl">Tags <span style="text-transform:none;font-weight:400;font-size:11px">(comma-separated)</span></label>
+          <input class="fi" type="text" id="imp-tags" placeholder="e.g. Billing, Retention, Q4">
+        </div>
+        <div style="margin-top:14px;padding:12px;background:var(--s1);border-radius:var(--r);font-size:12.5px;color:var(--k3)">
+          <strong style="color:var(--k7)">📎 Original file</strong> will be kept for download from the page. Parsed content becomes editable in the hub.
+        </div>
+      </div>
+
+      <!-- STEP 3: PREVIEW -->
+      <div id="step-content-3" style="display:none">
+        <div class="imp-stats" id="imp-stats"></div>
+        <div class="prev-wrap">
+          <div class="prev-toolbar">
+            <span class="prev-label">Parsed content preview</span>
+            <div class="prev-badges" id="prev-badges"></div>
+          </div>
+          <div class="prev-content" id="prev-content"></div>
+        </div>
+        <div style="margin-top:12px;font-size:12.5px;color:var(--k3)">✅ You can edit this content after publishing. The page will appear in your sidebar immediately.</div>
+      </div>
+
+      <!-- STEP 4: SUCCESS -->
+      <div id="step-content-4" style="display:none;text-align:center;padding:28px 16px">
+        <div style="font-size:52px;margin-bottom:12px">🎉</div>
+        <div style="font-size:18px;font-weight:700;color:var(--k9);margin-bottom:6px">Page published!</div>
+        <div style="font-size:14px;color:var(--k3);margin-bottom:20px" id="success-msg">Your document is now live in the knowledge hub.</div>
+        <button class="btn btnp" onclick="goToImported()" style="font-size:14px;padding:9px 20px">Open page →</button>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="imp-footer">
+      <div class="imp-footer-left" id="imp-foot-info">Supported: .txt .md .csv .docx .html</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="imp-back-btn" onclick="impBack()" style="display:none">← Back</button>
+        <button class="btn" onclick="closeImport()">Cancel</button>
+        <button class="btn btnp" id="imp-next-btn" onclick="impNext()" style="display:none">Next →</button>
+        <button class="btn btnp" id="imp-pub-btn" onclick="publishPage()" style="display:none">✓ Publish page</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEW PAGE MODAL ═══ -->
+<div class="ov hid" id="npov" onclick="if(event.target===this)closeNP()">
+  <div style="background:var(--surf);border-radius:var(--rxl);width:460px;max-width:94vw;padding:26px;box-shadow:var(--shc)" onclick="event.stopPropagation()">
+    <div style="font-size:17px;font-weight:700;margin-bottom:18px">✨ New blank page</div>
+    <div style="margin-bottom:14px"><label class="fl">Icon</label><div class="eg" id="npeg">
+      <div class="eo2 sel" onclick="pEm2(this,'📋')">📋</div>
+      <div class="eo2" onclick="pEm2(this,'📞')">📞</div>
+      <div class="eo2" onclick="pEm2(this,'📁')">📁</div>
+      <div class="eo2" onclick="pEm2(this,'🎓')">🎓</div>
+      <div class="eo2" onclick="pEm2(this,'❓')">❓</div>
+      <div class="eo2" onclick="pEm2(this,'💡')">💡</div>
+      <div class="eo2" onclick="pEm2(this,'⚙️')">⚙️</div>
+      <div class="eo2" onclick="pEm2(this,'📊')">📊</div>
+    </div></div>
+    <div style="margin-bottom:14px"><label class="fl">Title</label><input class="fi" type="text" id="npt" placeholder="Page title…"></div>
+    <div style="margin-bottom:14px"><label class="fl">Category</label><select class="fi" id="npc"><option value="scripts">Call Scripts</option><option value="sop">SOP / Process</option><option value="training">Training</option><option value="faq">FAQ</option></select></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+      <button class="btn" onclick="closeNP()">Cancel</button>
+      <button class="btn btnp" onclick="createPg()">Create page →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ SIDEBAR MANAGER ═══ -->
+<div class="mgr-overlay hid" id="mgr-ov" onclick="if(event.target===this)closeSidebarMgr()">
+  <div class="mgr-panel" onclick="event.stopPropagation()">
+    <div class="mgr-head">
+      <div>
+        <div class="mgr-head-title">⚙️ Manage Sidebar</div>
+        <div class="mgr-head-sub">Add, rename, or delete sections, dropdowns, and pages</div>
+      </div>
+      <button class="mgr-close" onclick="closeSidebarMgr()">✕</button>
+    </div>
+    <div class="mgr-tabs">
+      <button class="mgr-tab on" onclick="mgrTab(this,'scripts')">📞 Scripts</button>
+      <button class="mgr-tab" onclick="mgrTab(this,'sop')">📁 SOPs</button>
+      <button class="mgr-tab" onclick="mgrTab(this,'training')">🎓 Training</button>
+      <button class="mgr-tab" onclick="mgrTab(this,'faq')">❓ FAQs</button>
+    </div>
+    <div class="mgr-body">
+      <div class="mgr-tab-panel on" id="mgr-scripts"></div>
+      <div class="mgr-tab-panel" id="mgr-sop"></div>
+      <div class="mgr-tab-panel" id="mgr-training"></div>
+      <div class="mgr-tab-panel" id="mgr-faq"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SYNC STATUS BAR -->
+<div class="sync-bar" id="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-label" id="sync-label">Not connected — changes only visible to you</span>
+  <span class="sync-users" id="sync-users"></span>
+  <button onclick="openSetup()" style="background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.7);padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:var(--fn)">⚙ Configure sync</button>
+</div>
+
+<!-- FIREBASE SETUP OVERLAY -->
+<div class="setup-ov" id="setup-ov">
+  <div class="setup-box">
+    <div class="setup-title">🔥 Enable live sync for your team</div>
+    <div class="setup-sub">Connect a free Firebase database so everyone sees changes instantly — in real time. Takes 3 minutes to set up once.</div>
+
+    <div class="setup-step">
+      <div class="setup-sn">1</div>
+      <div class="setup-st">Go to <a href="https://console.firebase.google.com" target="_blank"><strong>console.firebase.google.com</strong></a> → click <strong>"Add project"</strong> → name it <code>cx-hub</code> → disable Google Analytics → Create project</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-sn">2</div>
+      <div class="setup-st">In the left sidebar click <strong>Build → Realtime Database</strong> → <strong>"Create database"</strong> → choose <strong>Start in test mode</strong> → Enable</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-sn">3</div>
+      <div class="setup-st">Go to <strong>Project Settings</strong> (gear icon ⚙️ top left) → scroll to <strong>"Your apps"</strong> → click <strong>&lt;/&gt; Web</strong> → register app → copy the <strong>databaseURL</strong> value (looks like <code>https://cx-hub-xxxxx-default-rtdb.firebaseio.com</code>)</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-sn">4</div>
+      <div class="setup-st">Paste your database URL below:
+        <input class="setup-inp" id="fb-url-inp" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+      </div>
+    </div>
+
+    <button class="setup-save" onclick="saveFirebaseConfig()">Connect & enable live sync →</button>
+    <button class="setup-skip" onclick="skipSetup()">Skip for now — continue without live sync</button>
+    <div class="setup-note">Free Firebase plan: 1 GB storage, 10 GB/month transfer — more than enough for a CX team.<br>Your data stays in your own Firebase account.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="tic">✓</span><span id="ttx"></span></div>
+
+<script>
+// ══════════════ PAGE DATA ══════════════
+const PG = {
+  'l1-scripts':{emoji:'📞',title:'L1 Call Scripts',cat:'scripts',tags:['Scripts','L1'],by:'Alex Chen',ts:'Today 9:14 AM',
+    body:`<h1>L1 Call Scripts</h1><p>Level 1 handles first-contact resolution for billing, tech support, and account queries.</p><blockquote>All agents must complete script certification before taking live calls.</blockquote><h2>Script Index</h2><table><thead><tr><th>Script</th><th>Use Case</th><th>Handle Time</th><th>Status</th></tr></thead><tbody><tr><td>Billing Enquiry</td><td>Invoice, charge, payment</td><td>4–6 min</td><td>✅ Current</td></tr><tr><td>Cancellation &amp; Retention</td><td>Customer wants to cancel</td><td>8–12 min</td><td>✅ Current</td></tr><tr><td>Tech Support</td><td>Login, password, errors</td><td>5–8 min</td><td>✅ Current</td></tr><tr><td>Account Update</td><td>Email, address, payment</td><td>3–5 min</td><td>⚠️ Review</td></tr></tbody></table><h2>Escalation Rules</h2><ul><li>Billing dispute over $500 → L2 immediately</li><li>Unresolved after 3 steps → L2</li><li>Customer requests manager → always comply</li><li>Suspected fraud → Security directly</li></ul><div class="callout">Always log a ticket before transferring. Never make a customer repeat their story.</div>`},
+  'retention-script':{emoji:'🤝',title:'Retention & Cancellation Script v2.1',cat:'scripts',tags:['Scripts','Retention','L1'],by:'Sarah K.',ts:'2 hours ago',
+    body:`<h1>Retention &amp; Cancellation Script v2.1</h1><p>Use when a customer initiates cancellation. Goal: understand root cause, offer a solution, retain where possible.</p><blockquote>Updated 2h ago — new objection responses for Q3 pricing changes.</blockquote><h2>Opening</h2><p>"I understand you'd like to cancel today. Before I process that, I'd love to understand what's prompted this — is there anything we could do differently?"</p><h2>Discovery Questions</h2><ul><li>"How long have you been with us, and what originally brought you on board?"</li><li>"Is there a specific feature that fell short of your expectations?"</li><li>"Would pausing the account for 30 days work better than cancelling?"</li></ul><h2>Objection Handling</h2><table><thead><tr><th>Objection</th><th>Response</th><th>Offer</th></tr></thead><tbody><tr><td>Too expensive</td><td>Acknowledge, pivot to value</td><td>Discounted tier, annual plan</td></tr><tr><td>Not using it</td><td>Offer onboarding call</td><td>Free coaching + 30-day pause</td></tr><tr><td>Found alternative</td><td>Listen, don't argue</td><td>Loyalty credit, feature compare</td></tr><tr><td>Technical issues</td><td>Escalate to L2, offer pause</td><td>30-day extension</td></tr></tbody></table><div class="callout">Mandatory: Log churn reason in CRM under "Churn Reason" field.</div>`},
+  'billing-script':{emoji:'💳',title:'Billing Enquiry Script',cat:'scripts',tags:['Scripts','Billing','L1'],by:'Alex C.',ts:'3 days ago',
+    body:`<h1>Billing Enquiry Script</h1><p>For all inbound billing calls — invoice queries, payment failures, charge disputes, plan changes.</p><h2>Authentication (Mandatory — 2 Points)</h2><ul><li>Full name on account</li><li>Email address OR last 4 digits of payment method</li></ul><div class="callout">Never proceed without 2 verified data points. Log all failed attempts.</div><h2>Common Scenarios</h2><h3>Unexpected Charge</h3><p>Pull last 3 invoices. Walk through line items. Common causes: unused seats, annual renewal, plan upgrade.</p><h3>Payment Failed</h3><p>Check card expiry, billing address mismatch, or bank block. Offer to retry with different method.</p><h3>Refund Request</h3><p>Under $100 → approve immediately. $100–$500 → team lead. Over $500 → Finance. See Refund SOP.</p>`},
+  'tech-support':{emoji:'🔧',title:'Tech Support Walkthrough — L1',cat:'scripts',tags:['Scripts','Technical','L1'],by:'Nina L.',ts:'5 days ago',
+    body:`<h1>Technical Support Walkthrough — L1</h1><p>For login issues, app errors, performance problems. Do <strong>not</strong> attempt hardware or advanced network troubleshooting at L1.</p><h2>Step 1 — Diagnose</h2><p>"Can you describe exactly what's happening? What do you see on screen?"</p><h2>Step 2 — Basic Checks</h2><ul><li>Browser: Chrome or Firefox latest? Try incognito.</li><li>Hard refresh: <code>Ctrl+Shift+R</code></li><li>Check status page: <code>status.yourproduct.com</code></li><li>Try different network (mobile hotspot)</li></ul><h2>Step 3 — Password Reset</h2><ol><li>Direct to /forgot-password</li><li>Check spam — allow 5 minutes</li><li>Manually trigger from admin panel if needed</li><li>Admin panel fails → escalate to L2</li></ol><h2>Escalation Triggers</h2><ul><li>Unresolved after 3 steps</li><li>Data loss suspected</li><li>Multiple users affected (potential incident)</li><li>SSO / API related — always L2</li></ul>`},
+  'l2-scripts':{emoji:'📋',title:'L2 Escalation Scripts',cat:'scripts',tags:['Scripts','L2'],by:'Alex C.',ts:'1 week ago',
+    body:`<h1>L2 Escalation Scripts</h1><p>L2 handles complex technical issues, escalated billing disputes, specialist knowledge cases.</p><div class="callout">Always review L1 ticket notes before speaking — never ask customers to repeat themselves.</div><h2>L2 Responsibility Matrix</h2><table><thead><tr><th>Category</th><th>L2 Action</th><th>SLA</th></tr></thead><tbody><tr><td>Complex billing dispute</td><td>Finance review, manual adjustment</td><td>24 hours</td></tr><tr><td>Unresolved technical</td><td>Log with engineering, provide workaround</td><td>4 hours</td></tr><tr><td>Security/fraud</td><td>Account freeze, Security handoff</td><td>15 minutes</td></tr><tr><td>Legal/compliance</td><td>Legal Team referral only</td><td>Same day</td></tr></tbody></table>`},
+  'refund-sop':{emoji:'💰',title:'Refund Authorization SOP',cat:'sop',tags:['SOP','Billing','Finance'],by:'Mike R.',ts:'Yesterday',
+    body:`<h1>Refund Authorization — SOP</h1><p>All refunds must be logged in Zendesk and the Finance tracker regardless of amount.</p><h2>Approval Tiers</h2><table><thead><tr><th>Amount</th><th>Approver</th><th>Turnaround</th><th>Method</th></tr></thead><tbody><tr><td>Up to $99</td><td>L1 Agent (self-approve)</td><td>Same day</td><td>Original method</td></tr><tr><td>$100–$499</td><td>Team Lead</td><td>1–2 business days</td><td>Original method</td></tr><tr><td>$500–$1,999</td><td>CX Manager</td><td>2–3 business days</td><td>Bank or original</td></tr><tr><td>$2,000+</td><td>Finance Director</td><td>5–7 business days</td><td>Bank transfer only</td></tr></tbody></table><h2>Processing Steps</h2><ol><li>Verify customer identity (2-point auth)</li><li>Pull original transaction in Stripe</li><li>Check eligibility — within 30 days, &lt;80% usage</li><li>Obtain required approval</li><li>Process refund in payment system</li><li>Log in Zendesk with amount, reason, approver, transaction ID</li><li>Send confirmation email (Template #R-01)</li></ol><div class="callout">Goodwill credits under $25 may be applied without approval but must be logged.</div>`},
+  'escalation-sop':{emoji:'⬆️',title:'Escalation Procedure SOP',cat:'sop',tags:['SOP','Escalation'],by:'Alex C.',ts:'2 weeks ago',
+    body:`<h1>Escalation Procedure SOP</h1><p>When and how to escalate from L1 to L2 and beyond.</p><h2>Escalation Criteria</h2><ul><li><strong>L1 → L2:</strong> Unresolved after 3 steps, complex billing (&gt;$100), customer requests manager</li><li><strong>L2 → Engineering:</strong> Reproducible bug, data integrity issue, performance incident</li><li><strong>L2 → Security:</strong> Fraud, account compromise, data breach concern</li><li><strong>L2 → Legal:</strong> Subpoena, compliance request, threat of legal action</li></ul><div class="callout">Warm-transfer only — never cold-transfer. Stay on line until L2 acknowledges the customer.</div>`},
+  'training':{emoji:'🎓',title:'Training Materials Hub',cat:'training',tags:['Training','Onboarding'],by:'Alex C.',ts:'2 weeks ago',
+    body:`<h1>Training Materials Hub</h1><p>Resources for new and existing CX team members. New agents complete in order during their first week.</p><h2>New Hire Onboarding Path</h2><table><thead><tr><th>Day</th><th>Module</th><th>Duration</th><th>Format</th></tr></thead><tbody><tr><td>Day 1 AM</td><td>Company &amp; product overview</td><td>3 hours</td><td>Video + reading</td></tr><tr><td>Day 1 PM</td><td>Tools setup (Zendesk, Slack, CRM)</td><td>2 hours</td><td>Guided setup</td></tr><tr><td>Day 2</td><td>L1 script walkthroughs + role-play</td><td>Full day</td><td>Role-play</td></tr><tr><td>Day 3</td><td>Shadow experienced agent</td><td>Full day</td><td>Shadowing</td></tr><tr><td>Day 4</td><td>Handle calls with supervisor monitoring</td><td>Full day</td><td>Supervised</td></tr><tr><td>Day 5</td><td>Certification + feedback</td><td>3 hours</td><td>Assessment</td></tr></tbody></table><div class="callout">New scripts flagged in #cx-updates on Slack — agents must acknowledge within 48 hours.</div>`},
+  'faqs':{emoji:'❓',title:'FAQs & Edge Cases',cat:'faq',tags:['FAQ','Reference'],by:'Sarah K.',ts:'4 days ago',
+    body:`<h1>FAQs &amp; Edge Cases</h1><h2>Billing FAQs</h2><h3>Q: Customer charged twice for same month</h3><p>Check for duplicate subscriptions. Process refund for duplicate (self-approve under $99). Log as billing error in CRM.</p><h3>Q: Dispute from 6 months ago</h3><p>Outside 30-day policy. Escalate to Manager with full context.</p><h2>Account Edge Cases</h2><h3>Q: Deceased account holder</h3><p>Transfer to senior agent immediately. Require death certificate + next-of-kin written request. Email-only.</p><h3>Q: Customer claims never signed up</h3><p>Pull creation metadata (IP, device, email confirmation timestamp). Fraud suspected → freeze account, escalate to Security.</p><h2>Compliance</h2><div class="callout">Never confirm internal system details over phone. Data storage questions → Privacy Policy URL.</div>`},
+  'ticket-guide':{emoji:'🎫',title:'Ticket Handling Guide',cat:'sop',tags:['SOP','Tickets','Zendesk'],by:'Mike R.',ts:'1 week ago',
+    body:`<h1>Ticket Handling Guide</h1><h2>Priority Matrix</h2><table><thead><tr><th>Priority</th><th>Criteria</th><th>First Response</th><th>Resolution</th></tr></thead><tbody><tr><td>🔴 Critical</td><td>Service down, data loss</td><td>15 min</td><td>4 hours</td></tr><tr><td>🟠 High</td><td>Core feature broken, billing &gt;$500</td><td>1 hour</td><td>24 hours</td></tr><tr><td>🟡 Medium</td><td>Non-critical issue, billing query</td><td>4 hours</td><td>3 business days</td></tr><tr><td>🟢 Low</td><td>Feature request, general question</td><td>8 hours</td><td>5 business days</td></tr></tbody></table><h2>Ticket Lifecycle</h2><ol><li>Triage — assign priority within 5 minutes</li><li>First response — acknowledge within SLA</li><li>Investigation — gather info, reproduce</li><li>Resolution or escalation with clear handoff notes</li><li>Confirm resolution before closing</li><li>Log root cause for analytics</li></ol><div class="callout">Never close without customer confirmation. Use "Pending" — auto-close after 72 hours of no response.</div>`},
+  'inbound-internet':{emoji:'🌐',title:'a. Internet Supply Down',cat:'scripts',tags:['Inbound','Internet','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Internet Supply Down — Inbound Script</h1>
+<p>Use this script when a customer calls reporting that their internet connection is down or unstable.</p>
+<blockquote>Always verify the account before proceeding. Check for any active outages in your system before troubleshooting.</blockquote>
+<h2>Opening</h2>
+<p>"Thank you for calling, this is [Name]. I understand your internet is currently down — I'm going to help you get that sorted right away. Could I take your account number or registered phone number?"</p>
+<h2>Step 1 — Check for Known Outage</h2>
+<ul>
+<li>Log into the outage management system and check the customer's area.</li>
+<li>If outage confirmed: "I can see there is a known outage in your area. Our engineers are already working on it. Estimated resolution is [time]. I'll note your account for a follow-up call."</li>
+<li>If no outage: Proceed to troubleshooting below.</li>
+</ul>
+<h2>Step 2 — Basic Troubleshooting</h2>
+<ol>
+<li>Ask customer to check all cable connections are secure.</li>
+<li>Request they power-cycle the router: off for 30 seconds, then back on.</li>
+<li>Wait 2 minutes for the router to re-establish connection.</li>
+<li>Ask customer to check if lights on router are back to normal.</li>
+</ol>
+<h2>Step 3 — Router Light Status</h2>
+<table><thead><tr><th>Light Colour</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<tr><td>Solid green</td><td>Connected</td><td>Test browsing, likely resolved</td></tr>
+<tr><td>Flashing green</td><td>Connecting</td><td>Wait 2 minutes, recheck</td></tr>
+<tr><td>Solid red</td><td>No signal</td><td>Escalate — line fault possible</td></tr>
+<tr><td>No light</td><td>No power</td><td>Check power cable and socket</td></tr>
+</tbody></table>
+<h2>Escalation</h2>
+<p>If issue unresolved after troubleshooting: raise a field engineer ticket. Inform customer of appointment window.</p>
+<div class="callout">Always log a ticket even if the issue resolves. Ticket must include: account number, fault description, steps taken, and resolution.</div>`},
+
+  'inbound-rdni':{emoji:'📡',title:'b. RDNI',cat:'scripts',tags:['Inbound','RDNI','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>RDNI — Inbound Script</h1>
+<p>RDNI (Router Does Not Initialise) — use this script when the customer's router is powering on but not connecting to the network.</p>
+<h2>Identification</h2>
+<p>Customer symptoms: router has power, lights are on, but internet does not work. Different from "Internet Down" which may be a line fault.</p>
+<h2>Opening</h2>
+<p>"I can see your router is powering on but not establishing a connection. This is a known issue we can usually resolve remotely. Let me walk you through it."</p>
+<h2>Remote Reset Procedure</h2>
+<ol>
+<li>Confirm the router model with the customer (check label on the bottom of device).</li>
+<li>Initiate remote reset from the provisioning system on your end.</li>
+<li>Ask customer to hold the reset button on the router for 10 seconds.</li>
+<li>Wait 3–5 minutes for the router to fully re-initialise.</li>
+<li>Confirm all lights return to solid green/white.</li>
+</ol>
+<h2>If Remote Reset Fails</h2>
+<ul>
+<li>Check if the MAC address on the router matches the account — mismatch causes RDNI.</li>
+<li>If MAC mismatch: update the provisioning system with the correct MAC address and re-push config.</li>
+<li>If still failing after 2 attempts: escalate to Network Operations with full notes.</li>
+</ul>
+<div class="callout">Never push a config reset more than 3 times in one session — this can lock the device and require a physical swap.</div>`},
+
+  'inbound-recovery':{emoji:'🔄',title:'c. Recovery',cat:'scripts',tags:['Inbound','Recovery','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Recovery — Inbound Script</h1>
+<p>Use when a customer's service has been disrupted and needs to be restored after payment, reconnection, or a technical fix.</p>
+<h2>When to Use This Script</h2>
+<ul>
+<li>Customer service was suspended due to non-payment and they have now paid.</li>
+<li>Service was accidentally disconnected and needs manual recovery.</li>
+<li>Customer migrated and service needs to be re-provisioned at new address.</li>
+</ul>
+<h2>Recovery After Payment</h2>
+<ol>
+<li>Verify payment has cleared in the billing system (allow up to 15 minutes after payment).</li>
+<li>Navigate to account > Service Management > Restore Service.</li>
+<li>Click "Trigger Recovery" — this sends a re-provision signal to the router.</li>
+<li>Inform customer: "Your service should restore within 10–15 minutes. The router will restart automatically."</li>
+</ol>
+<h2>Manual Recovery (No Payment Issue)</h2>
+<ol>
+<li>Confirm the reason for disconnection from account notes.</li>
+<li>Get approval from Team Lead if disconnection was flagged.</li>
+<li>Use the Service Recovery tool in the admin panel.</li>
+<li>Log the reason for manual recovery in the notes field — this is mandatory.</li>
+</ol>
+<div class="callout">If the account has an active debt flag, do not restore service without Team Lead approval — even if the customer insists payment was made.</div>`},
+
+  'inbound-renewal':{emoji:'📋',title:'d. Help in Renewal',cat:'scripts',tags:['Inbound','Renewal','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Help in Renewal — Inbound Script</h1>
+<p>For customers calling about renewing their current contract or upgrading to a new package.</p>
+<h2>Opening</h2>
+<p>"I can see your current contract is [due to expire / has expired]. Great news — I can help you find the best package available for you today."</p>
+<h2>Renewal Conversation Flow</h2>
+<ol>
+<li>Pull up the customer's current package details: speed, price, contract end date.</li>
+<li>Check what retention or upgrade offers are available on the system for this account.</li>
+<li>Present 2–3 options maximum — don't overwhelm.</li>
+<li>Ask: "Are you happy with your current speed, or would you like to look at something faster?"</li>
+<li>Confirm choice and process the renewal in the billing system.</li>
+</ol>
+<h2>Renewal Offers to Check</h2>
+<table><thead><tr><th>Package</th><th>Speed</th><th>Price</th><th>Contract</th></tr></thead><tbody>
+<tr><td>Starter</td><td>25 Mbps</td><td>£20/mo</td><td>12 months</td></tr>
+<tr><td>Standard</td><td>65 Mbps</td><td>£28/mo</td><td>18 months</td></tr>
+<tr><td>Superfast</td><td>150 Mbps</td><td>£35/mo</td><td>18 months</td></tr>
+</tbody></table>
+<h2>Closing</h2>
+<p>"I've updated your account. Your new contract starts from [date]. You'll receive a confirmation email within 24 hours. Is there anything else I can help you with today?"</p>
+<div class="callout">Always read the key contract terms to the customer before confirming — price, length, and any early exit fees. This is a compliance requirement.</div>`},
+
+  'sales-enquiry':{emoji:'📝',title:'a. Sales Enquiry',cat:'scripts',tags:['Sales','Enquiry','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Sales Enquiry Script</h1>
+<p>For inbound calls from new or existing customers enquiring about purchasing a new service or checking on their current order status.</p>
+<h2>New Customer Enquiry</h2>
+<p>"Welcome! I'd be happy to help you find the right package. May I ask — is this for a home or business connection?"</p>
+<h2>Coverage Check</h2>
+<ol>
+<li>Take the customer's full postcode.</li>
+<li>Run a coverage check in the portal.</li>
+<li>If covered: present available packages for that area.</li>
+<li>If not covered: apologise and log the postcode for future coverage tracking. Offer to add to the waitlist.</li>
+</ol>
+<h2>Existing Customer — Order Status</h2>
+<ol>
+<li>Verify account with account number or date of birth.</li>
+<li>Check the order in the provisioning system.</li>
+<li>Give an honest status update: installation date, engineer visit window, or equipment dispatch status.</li>
+</ol>
+<h2>Package Comparison</h2>
+<table><thead><tr><th>Package</th><th>Speed</th><th>Price</th><th>Best For</th></tr></thead><tbody>
+<tr><td>Starter</td><td>25 Mbps</td><td>£20/mo</td><td>Light use, 1–2 people</td></tr>
+<tr><td>Standard</td><td>65 Mbps</td><td>£28/mo</td><td>Family use, streaming</td></tr>
+<tr><td>Superfast</td><td>150 Mbps</td><td>£35/mo</td><td>Heavy use, home working</td></tr>
+</tbody></table>
+<div class="callout">Never promise an installation date that isn't confirmed in the system. Always give a range, not a specific day.</div>`},
+
+  'outbound-service':{emoji:'📤',title:'3. Outbound Service',cat:'scripts',tags:['Outbound','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Outbound Service Script</h1>
+<p>For proactive outbound calls made by the team — follow-ups, fault notifications, satisfaction checks, and collections.</p>
+<h2>Opening an Outbound Call</h2>
+<p>"Good [morning/afternoon], may I speak with [Customer Name]? ... Hi [Name], my name is [Agent Name] calling from [Company]. Is now a good time to talk?"</p>
+<blockquote>If they say it is not a good time: "No problem at all — when would be a better time to call you back?" Log the callback time in the system.</blockquote>
+<h2>Types of Outbound Calls</h2>
+<table><thead><tr><th>Call Type</th><th>Purpose</th><th>Script Section</th></tr></thead><tbody>
+<tr><td>Fault follow-up</td><td>Check if reported fault is resolved</td><td>See Fault Follow-Up below</td></tr>
+<tr><td>Satisfaction call</td><td>Post-installation or post-repair check</td><td>See CSAT below</td></tr>
+<tr><td>Collections</td><td>Outstanding balance reminder</td><td>See Collections below</td></tr>
+<tr><td>Win-back</td><td>Re-engage churned customers</td><td>See Win-back below</td></tr>
+</tbody></table>
+<h2>Fault Follow-Up</h2>
+<p>"I'm calling to follow up on a fault that was raised on your account on [date]. I wanted to check — is your [service] working normally now?"</p>
+<ul>
+<li>If resolved: mark ticket as resolved, thank customer, close call.</li>
+<li>If not resolved: escalate immediately, apologise, give new resolution timeline.</li>
+</ul>
+<h2>CSAT Check</h2>
+<p>"We recently [installed your service / resolved an issue]. I just wanted to take 30 seconds to check — are you happy with the service so far? On a scale of 1–10, how would you rate your experience?"</p>
+<ul>
+<li>Score 8–10: Thank them, flag as promoter in CRM.</li>
+<li>Score 5–7: Ask what could be improved, log feedback.</li>
+<li>Score 1–4: Apologise, escalate to senior agent for recovery call.</li>
+</ul>
+<div class="callout">All outbound calls must be logged in CRM with: call type, outcome, and next action. Missing logs will be flagged in QA review.</div>`},
+
+  'router-recovery':{emoji:'📶',title:'4. Router Recovery',cat:'scripts',tags:['Router','Recovery','Script'],by:'Alex C.',ts:'Today',
+    body:`<h1>Router Recovery Script</h1>
+<p>Complete guide for recovering a router that is offline, misconfigured, or needs a factory reset — covers both remote and manual recovery steps.</p>
+<h2>Identify the Issue First</h2>
+<table><thead><tr><th>Symptom</th><th>Likely Cause</th><th>Recovery Type</th></tr></thead><tbody>
+<tr><td>No lights at all</td><td>Power issue</td><td>Power check — not router fault</td></tr>
+<tr><td>Red WAN light</td><td>No line signal</td><td>Line fault — raise engineer ticket</td></tr>
+<tr><td>All lights green but no internet</td><td>Config error / RDNI</td><td>Remote reset (see RDNI script)</td></tr>
+<tr><td>Intermittent drops</td><td>Firmware or line noise</td><td>Firmware update + line test</td></tr>
+<tr><td>Customer replaced router</td><td>MAC mismatch</td><td>Update MAC in provisioning system</td></tr>
+</tbody></table>
+<h2>Remote Recovery Steps</h2>
+<ol>
+<li>Log in to provisioning portal > search customer account.</li>
+<li>Navigate to Device Management > select the router.</li>
+<li>Click "Send Reboot Command" — wait 3 minutes.</li>
+<li>If no response, click "Push Default Config".</li>
+<li>If still unresponsive, check if device is online in the NMS (Network Management System).</li>
+</ol>
+<h2>Manual Recovery (Customer-Side)</h2>
+<ol>
+<li>Locate the reset pinhole on the back of the router.</li>
+<li>Use a pin or paperclip — hold for 10–15 seconds until lights flash.</li>
+<li>Wait 5 minutes for full re-initialisation.</li>
+<li>Once online, re-push config from the provisioning portal.</li>
+<li>Confirm with customer that Wi-Fi is broadcasting and internet is working.</li>
+</ol>
+<h2>MAC Address Update (Replacement Router)</h2>
+<ol>
+<li>Get the new MAC address from the label on the bottom of the new router.</li>
+<li>Go to Account > Device Management > Change MAC Address.</li>
+<li>Enter new MAC and save.</li>
+<li>Push configuration — allow 5 minutes to take effect.</li>
+</ol>
+<div class="callout">If you push config to a router with the wrong MAC address, it will provision someone else's account. Always double-check MAC before pushing.</div>`}
+};
+
+let DOCS = [
+  {id:'inbound-internet',e:'🌐',t:'a. Internet Supply Down',p:'Scripts › 1. Inbound Service',c:'scripts'},
+  {id:'inbound-rdni',e:'📡',t:'b. RDNI',p:'Scripts › 1. Inbound Service',c:'scripts'},
+  {id:'inbound-recovery',e:'🔄',t:'c. Recovery',p:'Scripts › 1. Inbound Service',c:'scripts'},
+  {id:'inbound-renewal',e:'📋',t:'d. Help in Renewal',p:'Scripts › 1. Inbound Service',c:'scripts'},
+  {id:'sales-enquiry',e:'📝',t:'a. Enquiry',p:'Scripts › 2. Sales and Status',c:'scripts'},
+  {id:'outbound-service',e:'📤',t:'3. Outbound Service',p:'Scripts',c:'scripts'},
+  {id:'router-recovery',e:'📶',t:'4. Router Recovery',p:'Scripts',c:'scripts'},
+  {id:'retention-script',e:'🤝',t:'Retention & Cancellation Script',p:'SOPs',c:'sop'},
+  {id:'billing-script',e:'💳',t:'Billing Enquiry Script',p:'SOPs',c:'sop'},
+  {id:'tech-support',e:'🔧',t:'Tech Support Walkthrough',p:'SOPs',c:'sop'},
+  {id:'refund-sop',e:'💰',t:'Refund Authorization SOP',p:'SOPs',c:'sop'},
+  {id:'escalation-sop',e:'⬆️',t:'Escalation Procedure SOP',p:'SOPs',c:'sop'},
+  {id:'ticket-guide',e:'🎫',t:'Ticket Handling Guide',p:'SOPs',c:'sop'},
+  {id:'training',e:'🎓',t:'Training Materials',p:'Training',c:'training'},
+  {id:'faqs',e:'❓',t:'FAQs & Edge Cases',p:'Reference',c:'faq'},
+];
+
+// ══════════════ APP STATE ══════════════
+let collapsed=false, commOpen=false, curPage=null, sfilt='all';
+let selEmoji='📋', selEmoji2='📋', exOpen=false;
+let isEditing=false, origBody='', origTitle='', origTags=[];
+// Import wizard state
+let impStep=1, parsedHTML='', parsedStats={}, impEmoji='📄', lastImportedId=null;
+
+// ══════════════ SIDEBAR / NAV ══════════════
+function togSB(){collapsed=!collapsed;document.getElementById('sb').classList.toggle('col',collapsed);document.querySelector('.cob').textContent=collapsed?'▶':'◀'}
+function setAct(b){document.querySelectorAll('.nb').forEach(x=>x.classList.remove('act'));if(b)b.classList.add('act')}
+function togNav(b,id){
+  const ch=document.getElementById('ch-'+id), ar=document.getElementById('ar-'+id);
+  if(!ch)return;const op=ch.classList.contains('op');
+  ch.classList.toggle('op',!op);if(ar)ar.classList.toggle('op',!op);
+  if(!op)goPage(id,b);
+}
+function showDash(b){
+  if(isEditing){if(!confirm('You have unsaved changes. Leave anyway?'))return;}
+  isEditing=false;
+  curPage=null;
+  document.getElementById('vdash').style.display='block';
+  document.getElementById('vedit').style.display='none';
+  document.getElementById('edit-tog-btn').style.display='none';
+  document.getElementById('del-pg-btn').style.display='none';
+  setBC([{l:'CX Hub'},{l:'Dashboard',cur:true}]);
+  rebuildSidebar();
+  setAct(document.getElementById('nb-dash'));
+}
+
+function goPage(id,b){
+  const p=PG[id];if(!p){toast('Page not found','⚠️');return}
+  if(isEditing && curPage!==id){if(!confirm('You have unsaved changes. Leave anyway?'))return;}
+  isEditing=false;
+  curPage=id;
+  document.getElementById('vdash').style.display='none';
+  document.getElementById('vedit').style.display='block';
+  setAct(b);
+
+  // Show edit toggle button
+  const etb=document.getElementById('edit-tog-btn');
+  etb.style.display='inline-flex';
+  etb.className='edit-tog';
+  etb.textContent='✏️ Edit';
+  document.getElementById('del-pg-btn').style.display='inline-flex';
+
+  const cL={scripts:'Scripts',sop:'SOPs',training:'Training',faq:'FAQs',imported:'Imported'}[p.cat]||'Docs';
+  setBC([{l:'CX Hub',a:'showDash(null)'},{l:cL},{l:p.title,cur:true}]);
+
+  renderPage(id);
+}
+
+function renderPage(id){
+  const p=PG[id];
+  const tgH=buildTagsHtml(p.tags||[], false);
+  const impBadge=p.imported?'<span class="imp-page-tag">IMPORTED</span>':'';
+
+  document.getElementById('eo').innerHTML=`
+<div class="edit-mode-bar" id="embar">
+  <div class="emb-dot"></div>
+  <div class="emb-lbl">Editing <strong id="embar-title">${p.title}</strong> — changes not saved yet</div>
+  <button class="emb-dis" onclick="discardEdit()">✕ Discard</button>
+  <button class="emb-save" onclick="saveEdit()">✓ Save changes</button>
+</div>
+<span class="pepb" id="pg-emoji" onclick="changeEmoji()">${p.emoji}</span>
+<textarea class="ptit vmode" id="pti" rows="1" readonly placeholder="Page title…">${p.title}</textarea>
+<div class="mst">
+  <span class="mc">👤 <span id="meta-by">${p.by}</span></span>
+  <span class="mc">🕐 <span id="meta-ts">${p.ts}</span></span>
+  ${p.originalFile?`<span class="mc">📎 <a href="#" onclick="toast('Downloads: ${p.originalFile}','📎');return false" style="color:var(--teal)">${p.originalFile}</a></span>`:''}
+  <div class="tgch" id="tag-row">${tgH}${impBadge}</div>
+</div>
+<div class="toolbar hidden" id="main-toolbar">
+  <select class="tbsel" onchange="fB(this.value)">
+    <option value="p">Paragraph</option>
+    <option value="h1">Heading 1</option>
+    <option value="h2">Heading 2</option>
+    <option value="h3">Heading 3</option>
+  </select>
+  <div class="tbdiv"></div>
+  <button class="tb" onclick="c('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+  <button class="tb" onclick="c('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+  <button class="tb" onclick="c('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+  <button class="tb" onclick="c('strikeThrough')">S̶</button>
+  <div class="tbdiv"></div>
+  <button class="tb" onclick="c('insertUnorderedList')">• List</button>
+  <button class="tb" onclick="c('insertOrderedList')">1. List</button>
+  <button class="tb" onclick="insCk()">☑ Check</button>
+  <div class="tbdiv"></div>
+  <button class="tb" onclick="insTbl()">⊞ Table</button>
+  <button class="tb" onclick="insCall()">⚠ Callout</button>
+  <button class="tb" onclick="insQ()">❝ Quote</button>
+  <button class="tb" onclick="insLnk()">🔗 Link</button>
+  <div class="tbdiv"></div>
+  <button class="tb" onclick="c('undo')" title="Undo">↩ Undo</button>
+  <button class="tb" onclick="c('redo')" title="Redo">↪ Redo</button>
+</div>
+<div class="eb vmode" id="eb">${p.body}</div>
+<div class="del-box" id="del-box">
+  <p>⚠️ Are you sure you want to delete "<strong>${p.title}</strong>"? This cannot be undone.</p>
+  <div class="del-box-btns">
+    <button class="btn" onclick="document.getElementById('del-box').classList.remove('show')">Cancel</button>
+    <button class="btn del" style="background:var(--rose);border-color:var(--rose);color:#fff" onclick="confirmDelete()">Yes, delete page</button>
+  </div>
+</div>`;
+
+  // Store originals for discard
+  origBody=p.body;
+  origTitle=p.title;
+  origTags=[...(p.tags||[])];
+
+  autoRz();
+  setupTitleSync();
+}
+
+function buildTagsHtml(tags, editing){
+  const tagColor={'Scripts':'tsc','L1':'tsc','L2':'tsc','SOP':'tso','Training':'ttr','Billing':'tbi','Technical':'tte','Retention':'tre','FAQ':'tfq'};
+  let html=tags.map(t=>{
+    const c=tagColor[t]||'tup';
+    const x=editing?`<span class="tag-x" onclick="removeTag('${t}')">✕</span>`:'';
+    return`<span class="tp ${c}">${t}${x}</span>`;
+  }).join('');
+  if(editing){
+    html+=`<input class="tag-addinp" id="tag-inp" placeholder="+ Add tag" onkeydown="addTagOnEnter(event)">`;
+  }
+  return html;
+}
+
+function setupTitleSync(){
+  const ta=document.getElementById('pti');
+  if(!ta)return;
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
+  ta.addEventListener('input',()=>{
+    ta.style.height='auto';
+    ta.style.height=ta.scrollHeight+'px';
+    const emb=document.getElementById('embar-title');
+    if(emb)emb.textContent=ta.value||'Untitled';
+    markUnsaved();
+  });
+}
+
+// ══════════════ EDIT MODE ══════════════
+function toggleEditMode(){
+  if(isEditing){saveEdit();}
+  else{enterEditMode();}
+}
+
+function enterEditMode(){
+  isEditing=true;
+  const p=PG[curPage]; if(!p)return;
+
+  // Snapshot for discard
+  origBody=document.getElementById('eb')?.innerHTML||p.body;
+  origTitle=document.getElementById('pti')?.value||p.title;
+  origTags=[...(p.tags||[])];
+
+  // Update toggle button
+  const etb=document.getElementById('edit-tog-btn');
+  etb.className='edit-tog on';
+  etb.textContent='✓ Save';
+
+  // Show edit bar
+  document.getElementById('embar').classList.add('vis');
+
+  // Make title editable
+  const pti=document.getElementById('pti');
+  pti.readOnly=false;
+  pti.className='ptit emode';
+  pti.focus();
+
+  // Make body editable
+  const eb=document.getElementById('eb');
+  eb.className='eb emode';
+  eb.contentEditable='true';
+  eb.focus();
+
+  // Show toolbar
+  document.getElementById('main-toolbar').classList.remove('hidden');
+
+  // Show tag editing
+  document.getElementById('tag-row').innerHTML=buildTagsHtml(p.tags||[], true);
+
+  toast('Edit mode ON — make your changes, then click Save','✏️');
+}
+
+function markUnsaved(){
+  // Add unsaved dot to breadcrumb current page if not there
+  const bcc=document.querySelector('.bcc');
+  if(bcc && !bcc.querySelector('.udot')){
+    const d=document.createElement('span');d.className='udot';bcc.appendChild(d);
+  }
+}
+
+function saveEdit(){
+  if(!curPage)return;
+  const p=PG[curPage];
+  const newTitle=document.getElementById('pti')?.value.trim()||p.title;
+  const newBody=document.getElementById('eb')?.innerHTML||p.body;
+
+  // Collect current tags from DOM
+  const tagEls=document.querySelectorAll('#tag-row .tp');
+  const newTags=[...tagEls].map(el=>el.textContent.replace('✕','').trim()).filter(Boolean);
+
+  // Save to store
+  p.title=newTitle;
+  p.body=newBody;
+  p.tags=newTags;
+  p.by='Alex C.';
+  p.ts='Just now';
+
+  // Update DOCS list title
+  const docEntry=DOCS.find(d=>d.id===curPage);
+  if(docEntry)docEntry.t=newTitle;
+
+  // Update sidebar nav label if visible
+  document.querySelectorAll('.nb.act .lbl').forEach(el=>el.textContent=newTitle);
+
+  // Exit edit mode
+  exitEditMode();
+
+  // Re-render cleanly
+  renderPage(curPage);
+  setBC([{l:'CX Hub',a:'showDash(null)'},{l:{scripts:'Scripts',sop:'SOPs',training:'Training',faq:'FAQs',imported:'Imported'}[p.cat]||'Docs'},{l:newTitle,cur:true}]);
+
+  toast('"'+newTitle+'" saved successfully','✅');
+  // Sync to Firebase so all teammates see the change
+  syncPageToFirebase(curPage);
+}
+
+function discardEdit(){
+  if(!curPage)return;
+  exitEditMode();
+  // Restore originals
+  const eb=document.getElementById('eb');
+  if(eb)eb.innerHTML=origBody;
+  const pti=document.getElementById('pti');
+  if(pti){pti.value=origTitle;pti.style.height='auto';pti.style.height=pti.scrollHeight+'px';}
+  PG[curPage].tags=[...origTags];
+  document.getElementById('tag-row').innerHTML=buildTagsHtml(origTags, false);
+  toast('Changes discarded','↩');
+}
+
+function exitEditMode(){
+  isEditing=false;
+
+  // Toggle button
+  const etb=document.getElementById('edit-tog-btn');
+  etb.className='edit-tog';
+  etb.textContent='✏️ Edit';
+
+  // Hide edit bar
+  const embar=document.getElementById('embar');
+  if(embar)embar.classList.remove('vis');
+
+  // Make title read-only
+  const pti=document.getElementById('pti');
+  if(pti){pti.readOnly=true;pti.className='ptit vmode';}
+
+  // Make body read-only
+  const eb=document.getElementById('eb');
+  if(eb){eb.className='eb vmode';eb.contentEditable='false';}
+
+  // Hide toolbar
+  const tb=document.getElementById('main-toolbar');
+  if(tb)tb.classList.add('hidden');
+
+  // Remove unsaved dot
+  document.querySelector('.udot')?.remove();
+}
+
+// ── Tag management ──
+function removeTag(tag){
+  if(!curPage)return;
+  const p=PG[curPage];
+  p.tags=(p.tags||[]).filter(t=>t!==tag);
+  document.getElementById('tag-row').innerHTML=buildTagsHtml(p.tags, true);
+  markUnsaved();
+}
+
+function addTagOnEnter(e){
+  if(e.key!=='Enter'&&e.key!==',')return;
+  e.preventDefault();
+  const inp=document.getElementById('tag-inp');
+  const val=inp.value.trim().replace(',','');
+  if(!val||!curPage)return;
+  const p=PG[curPage];
+  if(!(p.tags||[]).includes(val)){
+    p.tags=[...(p.tags||[]),val];
+    document.getElementById('tag-row').innerHTML=buildTagsHtml(p.tags, true);
+    markUnsaved();
+    setTimeout(()=>{const i=document.getElementById('tag-inp');if(i)i.focus();},50);
+  }
+}
+
+// ── Emoji picker ──
+function changeEmoji(){
+  if(!isEditing){toast('Click ✏️ Edit first to change the icon','💡');return;}
+  const emojis=['📄','📋','📞','📁','🎓','❓','🎫','💡','⚙️','📊','🤝','💳','🔧','💰','⬆️','🎯','🛡️','📝','🔍','📌'];
+  const pick=emojis[Math.floor(Math.random()*emojis.length)];
+  document.getElementById('pg-emoji').textContent=pick;
+  PG[curPage].emoji=pick;
+  markUnsaved();
+  toast('Icon changed — save to keep it','✅');
+}
+
+// ── Delete page ──
+function deletePage(){
+  document.getElementById('del-box').classList.toggle('show');
+}
+
+function confirmDelete(){
+  if(!curPage)return;
+  const title=PG[curPage].title;
+  const deletedId = curPage;
+  delete PG[curPage];
+  DOCS=DOCS.filter(d=>d.id!==curPage);
+  syncDeleteToFirebase(deletedId);
+  // remove from sidebar
+  document.querySelectorAll('.nb').forEach(b=>{
+    if(b.onclick&&b.onclick.toString().includes(curPage))b.closest('div')?.remove();
+  });
+  isEditing=false;
+  curPage=null;
+  document.getElementById('edit-tog-btn').style.display='none';
+  showDash(null);
+  toast('"'+title+'" deleted','🗑️');
+}
+
+function autoRz(){const ta=document.getElementById('pti');if(!ta)return;ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
+
+function setBC(items){
+  document.getElementById('bc').innerHTML=items.map((it,i)=>{
+    const sep=i<items.length-1?'<span class="bcs">›</span>':'';
+    if(it.cur)return`<span class="bcc">${it.l}</span>${sep}`;
+    const fn=it.a?`onclick="${it.a}"`:`onclick="showDash(null)"`;
+    return`<span ${fn}>${it.l}</span>${sep}`;
+  }).join('');
+}
+
+// ══════════════ EDITOR COMMANDS ══════════════
+function c(cmd){document.execCommand(cmd,false,null);document.getElementById('eb')?.focus();markUnsaved();}
+function fB(v){if(v==='Paragraph')v='p';document.execCommand('formatBlock',false,v);document.getElementById('eb')?.focus();markUnsaved();}
+function insTbl(){document.execCommand('insertHTML',false,'<table><thead><tr><th>Column A</th><th>Column B</th><th>Column C</th></tr></thead><tbody><tr><td>Cell</td><td>Cell</td><td>Cell</td></tr><tr><td>Cell</td><td>Cell</td><td>Cell</td></tr></tbody></table><p></p>');markUnsaved();}
+function insCall(){document.execCommand('insertHTML',false,'<div class="callout">Important note here</div><p></p>');markUnsaved();}
+function insQ(){document.execCommand('insertHTML',false,'<blockquote>Quote or key point</blockquote><p></p>');markUnsaved();}
+function insCk(){document.execCommand('insertHTML',false,`<div style="display:flex;gap:8px;margin:3px 0"><input type="checkbox" id="ck${Date.now()}"><label> Task item</label></div>`);markUnsaved();}
+function insLnk(){const u=prompt('URL:','https://');if(u){document.execCommand('createLink',false,u);markUnsaved();}}
+
+// ══════════════ COMMENTS ══════════════
+function togComments(){commOpen=!commOpen;document.getElementById('cpc').classList.toggle('op',commOpen)}
+function postCmt(){const i=document.getElementById('ccin');const t=i.value.trim();if(!t)return;const l=document.getElementById('cplist');const d=document.createElement('div');d.className='cc';d.innerHTML=`<div class="cch"><span class="cca">Alex C.</span><span class="cct">Just now</span></div><div class="cctx">${t}</div>`;l.appendChild(d);i.value='';toast('Comment posted')}
+
+// ══════════════ SEARCH ══════════════
+function openSearch(){document.getElementById('sov').classList.remove('hid');setTimeout(()=>document.getElementById('sinp').focus(),60);runS('')}
+function mClose(id){document.getElementById(id).classList.add('hid');if(id==='sov')document.getElementById('sinp').value=''}
+function setF(b,f){sfilt=f;document.querySelectorAll('.fc').forEach(x=>x.classList.remove('on'));b.classList.add('on');runS(document.getElementById('sinp').value)}
+function runS(q){
+  let ds=DOCS;
+  if(sfilt!=='all')ds=ds.filter(d=>d.c===sfilt);
+  if(q)ds=ds.filter(d=>d.t.toLowerCase().includes(q.toLowerCase()));
+  const con=document.getElementById('sres');
+  if(!ds.length){con.innerHTML='<div class="semp">No results found</div>';return}
+  con.innerHTML=ds.map(d=>`<div class="sri2" onclick="mClose('sov');goPage('${d.id}',null)"><span class="srem">${d.e}</span><div><div class="srtit">${d.t}${PG[d.id]?.imported?'<span class="imp-page-tag">IMPORTED</span>':''}</div><div class="srpt">${d.p}</div></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  IMPORT WIZARD — THE MAIN FEATURE
+// ═══════════════════════════════════════════════
+function openImport(){
+  impStep=1; parsedHTML=''; parsedStats={}; impEmoji='📄';
+  document.getElementById('imp-ov').classList.remove('hid');
+  resetToStep1();
+}
+function closeImport(){document.getElementById('imp-ov').classList.add('hid')}
+
+function resetToStep1(){
+  setImpStep(1);
+  showStepContent('1');
+  document.getElementById('imp-next-btn').style.display='none';
+  document.getElementById('imp-back-btn').style.display='none';
+  document.getElementById('imp-pub-btn').style.display='none';
+  document.getElementById('imp-sub-txt').textContent='Upload any file and it converts into a formatted knowledge page';
+  document.getElementById('imp-foot-info').textContent='Supported: .txt .md .csv .docx .html';
+  // reset file input
+  const fi=document.getElementById('file-inp');fi.value='';
+  document.getElementById('drop-area').classList.remove('drag');
+}
+
+function setImpStep(n){
+  impStep=n;
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('step-'+i);
+    el.className='step-item'+(i<n?' done':i===n?' active':'');
+  }
+}
+
+function showStepContent(which){
+  ['1','parsing','2','3','4'].forEach(id=>{
+    const el=document.getElementById('step-content-'+id);
+    if(el)el.style.display=id===which?'block':'none';
+  });
+}
+
+// ── Drop zone events ──
+function dzOv(e){e.preventDefault();document.getElementById('drop-area').classList.add('drag')}
+function dzLv(){document.getElementById('drop-area').classList.remove('drag')}
+function dzDp(e){e.preventDefault();dzLv();const f=e.dataTransfer.files[0];if(f)fileChosen(f)}
+
+function fileChosen(file){
+  if(!file)return;
+  const allowed=['txt','md','csv','docx','doc','html','htm','json'];
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!allowed.includes(ext)){toast('Format not supported. Use: TXT, MD, CSV, DOCX, HTML','⚠️');return}
+  // set default title from filename
+  document.getElementById('imp-title').value=file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  startParsing(file);
+}
+
+// ── Core parser ──
+async function startParsing(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  showStepContent('parsing');
+  document.getElementById('imp-back-btn').style.display='none';
+  document.getElementById('imp-next-btn').style.display='none';
+  document.getElementById('imp-sub-txt').textContent='Parsing your document…';
+
+  const logEl=document.getElementById('parse-log');
+  const fillEl=document.getElementById('parse-fill');
+  const statusEl=document.getElementById('parse-status');
+  const detailEl=document.getElementById('parse-detail');
+
+  function log(msg){const s=document.createElement('span');s.textContent='> '+msg;logEl.appendChild(s);logEl.scrollTop=logEl.scrollHeight}
+  function setProgress(pct,status,detail){fillEl.style.width=pct+'%';statusEl.textContent=status;detailEl.textContent=detail}
+
+  log('File: '+file.name+' ('+formatBytes(file.size)+')');
+  log('Format detected: '+ext.toUpperCase());
+  setProgress(10,'Reading file…','Loading into memory');
+  await delay(200);
+
+  try{
+    let html='';
+
+    if(ext==='docx'||ext==='doc'){
+      log('Using mammoth.js for DOCX parsing…');
+      setProgress(30,'Parsing Word document…','Extracting text and formatting');
+      await delay(300);
+      const arrayBuffer=await file.arrayBuffer();
+      setProgress(60,'Converting to HTML…','Preserving headings, tables, bullets');
+      await delay(200);
+      const result=await mammoth.convertToHtml({arrayBuffer});
+      html=result.value;
+      if(result.messages.length){log('Warnings: '+result.messages.map(m=>m.message).join(', '))}
+      log('DOCX parsed: '+result.messages.length+' warnings');
+      setProgress(85,'Cleaning up formatting…','Normalising HTML structure');
+      await delay(200);
+      html=cleanDocxHtml(html);
+    }
+    else if(ext==='md'||ext==='txt'){
+      log('Parsing '+(ext==='md'?'Markdown':'plain text')+'…');
+      setProgress(30,'Reading text…','Detecting structure');
+      const text=await file.text();
+      await delay(200);
+      setProgress(60,'Converting structure…','Headings, bullets, tables, code blocks');
+      await delay(150);
+      html=markdownToHtml(text);
+      log('Lines processed: '+text.split('\n').length);
+    }
+    else if(ext==='csv'){
+      log('Parsing CSV file…');
+      setProgress(30,'Reading data…','Detecting columns and rows');
+      const text=await file.text();
+      await delay(200);
+      setProgress(65,'Building table…','Formatting headers and rows');
+      await delay(150);
+      html=csvToHtml(text);
+      const rows=text.trim().split('\n');
+      log('Rows: '+(rows.length-1)+' data rows, '+rows[0].split(',').length+' columns');
+    }
+    else if(ext==='html'||ext==='htm'){
+      log('Parsing HTML file…');
+      setProgress(40,'Extracting body content…','Stripping scripts and styles');
+      const text=await file.text();
+      await delay(200);
+      setProgress(70,'Cleaning HTML…','Normalising structure');
+      await delay(150);
+      html=cleanHtml(text);
+      log('HTML parsed successfully');
+    }
+    else if(ext==='json'){
+      log('Parsing JSON file…');
+      setProgress(40,'Reading JSON…','Formatting as structured content');
+      const text=await file.text();
+      await delay(200);
+      try{
+        const obj=JSON.parse(text);
+        html=jsonToHtml(obj,file.name);
+        log('JSON keys: '+Object.keys(obj).length);
+      }catch(e){html=`<pre>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>`;log('Displayed as raw text')}
+    }
+
+    setProgress(95,'Analysing structure…','Counting elements');
+    await delay(200);
+
+    // Compute stats
+    const tmp=document.createElement('div');tmp.innerHTML=html;
+    parsedStats={
+      words: tmp.textContent.trim().split(/\s+/).filter(Boolean).length,
+      headings: tmp.querySelectorAll('h1,h2,h3,h4').length,
+      tables: tmp.querySelectorAll('table').length,
+      lists: tmp.querySelectorAll('ul,ol').length,
+      size: formatBytes(file.size),
+      ext: ext.toUpperCase()
+    };
+    parsedHTML=html;
+
+    log('Words: '+parsedStats.words+', Headings: '+parsedStats.headings+', Tables: '+parsedStats.tables);
+    setProgress(100,'Done! ✓','Document ready to configure');
+    await delay(400);
+
+    // Hide spinner, move to step 2
+    document.getElementById('parse-spinner').style.display='none';
+    statusEl.textContent='✅ Parsing complete!';
+    detailEl.textContent=parsedStats.words+' words · '+parsedStats.headings+' headings · '+parsedStats.tables+' tables';
+    await delay(600);
+
+    // Go to configure step
+    gotoStep2(file.name);
+
+  }catch(err){
+    log('ERROR: '+err.message);
+    setProgress(0,'Parsing failed','');
+    statusEl.textContent='⚠️ Could not parse this file';
+    detailEl.textContent=err.message;
+    document.getElementById('imp-back-btn').style.display='inline-flex';
+    document.getElementById('imp-back-btn').onclick=resetToStep1;
+    toast('Parse error: '+err.message,'⚠️');
+  }
+}
+
+function gotoStep2(filename){
+  setImpStep(2);
+  showStepContent('2');
+  document.getElementById('imp-sub-txt').textContent='Configure your new page settings';
+  document.getElementById('imp-back-btn').style.display='inline-flex';
+  document.getElementById('imp-back-btn').onclick=resetToStep1;
+  document.getElementById('imp-next-btn').style.display='inline-flex';
+  document.getElementById('imp-next-btn').textContent='Preview →';
+  document.getElementById('imp-next-btn').onclick=gotoStep3;
+  // store original filename for download reference
+  document.getElementById('imp-title').dataset.origFile=filename;
+  document.getElementById('imp-foot-info').textContent='✅ '+parsedStats.ext+' parsed · '+parsedStats.words+' words · '+parsedStats.size;
+}
+
+function gotoStep3(){
+  const title=document.getElementById('imp-title').value.trim()||'Imported Document';
+  setImpStep(3);
+  showStepContent('3');
+  document.getElementById('imp-sub-txt').textContent='Review the formatted content before publishing';
+  document.getElementById('imp-next-btn').style.display='none';
+  document.getElementById('imp-back-btn').onclick=()=>gotoStep2(document.getElementById('imp-title').dataset.origFile||'');
+  document.getElementById('imp-pub-btn').style.display='inline-flex';
+  // stats row
+  document.getElementById('imp-stats').innerHTML=`
+    <div class="stat-pill"><span>📝</span><span><strong>${parsedStats.words}</strong> words</span></div>
+    <div class="stat-pill"><span>📌</span><span><strong>${parsedStats.headings}</strong> headings</span></div>
+    <div class="stat-pill"><span>⊞</span><span><strong>${parsedStats.tables}</strong> tables</span></div>
+    <div class="stat-pill"><span>•</span><span><strong>${parsedStats.lists||0}</strong> lists</span></div>
+    <div class="stat-pill"><span>📎</span><span><strong>${parsedStats.size}</strong></span></div>`;
+  // tag badges
+  const cat=document.getElementById('imp-cat').value;
+  const catColor={scripts:'#4f46e5',sop:'#0f7870',training:'#16a34a',faq:'#d97706',imported:'#9333ea'}[cat]||'#555';
+  document.getElementById('prev-badges').innerHTML=`<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:${catColor}20;color:${catColor}">${cat.toUpperCase()}</span>`;
+  document.getElementById('prev-content').innerHTML=parsedHTML;
+  document.getElementById('imp-foot-info').textContent='Looks good? Hit "Publish page" to add it to your hub.';
+}
+
+function publishPage(){
+  const title=document.getElementById('imp-title').value.trim()||'Imported Document';
+  const cat=document.getElementById('imp-cat').value;
+  const tagsRaw=document.getElementById('imp-tags').value;
+  const tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim()).filter(Boolean):['Imported'];
+  const origFile=document.getElementById('imp-title').dataset.origFile||'';
+  const id='imp-'+Date.now();
+
+  // Add to page store
+  PG[id]={
+    emoji:impEmoji, title, cat,
+    tags, by:'Alex C.', ts:'Just now',
+    body:parsedHTML,
+    imported:true,
+    originalFile:origFile
+  };
+
+  // Add to search index
+  DOCS.unshift({id,e:impEmoji,t:title,p:'Imported',c:'imported'});
+  lastImportedId=id;
+
+  // Add to sidebar under "Imported" section
+  addToImportedNav(id,impEmoji,title);
+
+  // Update dashboard stats
+  const statEl=document.getElementById('stat-docs');
+  if(statEl)statEl.textContent=parseInt(statEl.textContent)+1;
+
+  // Add to recent list on dashboard
+  addToRecentList(id,impEmoji,title,cat);
+
+  // Show success step
+  setImpStep(4);
+  showStepContent('4');
+  document.getElementById('success-msg').textContent=`"${title}" is now live in your knowledge hub.`;
+  document.getElementById('imp-back-btn').style.display='none';
+  document.getElementById('imp-pub-btn').style.display='none';
+  document.getElementById('imp-next-btn').style.display='none';
+  const cancelBtn=document.querySelector('.imp-footer .btn');
+  if(cancelBtn)cancelBtn.textContent='Close';
+
+  toast('"'+title+'" published successfully!','✅');
+  syncPageToFirebase(id);
+  syncSidebarToFirebase();
+}
+
+function goToImported(){
+  closeImport();
+  if(lastImportedId)goPage(lastImportedId,null);
+}
+
+function addToImportedNav(id,emoji,title){
+  let sec=document.getElementById('imp-nav-section');
+  if(!sec){
+    sec=document.createElement('div');sec.id='imp-nav-section';
+    const lbl=document.createElement('span');lbl.className='sec';lbl.textContent='📥 Imported';
+    sec.appendChild(lbl);
+    document.getElementById('imported-nav').appendChild(sec);
+  }
+  const btn=document.createElement('button');
+  btn.className='nb';
+  btn.innerHTML=`<span class="ni">${emoji}</span><span class="lbl">${title}</span>`;
+  btn.onclick=function(){goPage(id,this)};
+  sec.appendChild(btn);
+}
+
+function addToRecentList(id,emoji,title,cat){
+  const catCls={scripts:'tsc',sop:'tso',training:'ttr',faq:'tfq',imported:'tup'}[cat]||'tup';
+  const catLbl={scripts:'Script',sop:'SOP',training:'Training',faq:'FAQ',imported:'Imported'}[cat]||'Doc';
+  const row=document.createElement('div');
+  row.className='dr';
+  row.onclick=()=>goPage(id,null);
+  row.innerHTML=`<div class="deb">${emoji}</div><div class="di"><div class="dn">${title} <span class="imp-page-tag">NEW</span></div><div class="dm">Just now · Alex C.</div></div><span class="tp ${catCls}">${catLbl}</span>`;
+  const list=document.getElementById('recent-list');
+  list.insertBefore(row,list.firstChild);
+  if(list.children.length>5)list.removeChild(list.lastChild);
+}
+
+function impBack(){resetToStep1()}
+function impNext(){gotoStep3()}
+
+function pEm(el,e){document.querySelectorAll('#imp-eg .eo2').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');impEmoji=e}
+
+// ══════════════ PARSERS ══════════════
+
+// Markdown / plain text → HTML
+function markdownToHtml(text){
+  const lines=text.split('\n');
+  let html='', inList=false, inOL=false, inCode=false, codeBuf='', inTable=false, tableLines=[];
+
+  function flushList(){if(inList){html+='</ul>';inList=false}if(inOL){html+='</ol>';inOL=false}}
+  function flushTable(){
+    if(!inTable||!tableLines.length)return;
+    const rows=tableLines.filter(l=>!/^[\s|:-]+$/.test(l));
+    if(rows.length===0){inTable=false;tableLines=[];return}
+    html+='<table>';
+    rows.forEach((row,i)=>{
+      const cells=row.split('|').map(c=>c.trim()).filter(c=>c!=='');
+      if(i===0){html+='<thead><tr>'+cells.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';}
+      else{html+='<tr>'+cells.map(c=>`<td>${c}</td>`).join('')+'</tr>';}
+    });
+    html+='</tbody></table>';
+    inTable=false;tableLines=[];
+  }
+
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+
+    // Code block
+    if(l.startsWith('```')){
+      if(!inCode){inCode=true;codeBuf='';continue}
+      else{html+=`<pre><code>${codeBuf.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</code></pre>`;inCode=false;codeBuf='';continue}
+    }
+    if(inCode){codeBuf+=l+'\n';continue}
+
+    // Table
+    if(l.includes('|')&&l.trim().startsWith('|')){
+      flushList();if(!inTable)inTable=true;tableLines.push(l);continue;
+    }
+    if(inTable){flushTable()}
+
+    // HR
+    if(/^[-*_]{3,}$/.test(l.trim())){flushList();html+='<hr>';continue}
+
+    // Headings
+    const hm=l.match(/^(#{1,6})\s+(.+)/);
+    if(hm){flushList();html+=`<h${hm[1].length}>${inlineMd(hm[2])}</h${hm[1].length}>`;continue}
+
+    // Blockquote
+    if(l.startsWith('> ')){flushList();html+=`<blockquote>${inlineMd(l.slice(2))}</blockquote>`;continue}
+
+    // Callout (> ⚠ or > ! patterns)
+    if(l.startsWith('>!')||l.startsWith('>[!')){flushList();html+=`<div class="callout">${inlineMd(l.replace(/^>!?\[?!?\]?\s*/,''))}</div>`;continue}
+
+    // Unordered list
+    if(/^[-*+]\s+/.test(l)){
+      if(inOL){html+='</ol>';inOL=false}
+      if(!inList){html+='<ul>';inList=true}
+      html+=`<li>${inlineMd(l.replace(/^[-*+]\s+/,''))}</li>`;continue;
+    }
+
+    // Ordered list
+    if(/^\d+\.\s+/.test(l)){
+      if(inList){html+='</ul>';inList=false}
+      if(!inOL){html+='<ol>';inOL=true}
+      html+=`<li>${inlineMd(l.replace(/^\d+\.\s+/,''))}</li>`;continue;
+    }
+
+    flushList();
+
+    // Empty line
+    if(!l.trim()){continue}
+
+    html+=`<p>${inlineMd(l)}</p>`;
+  }
+  flushList();flushTable();
+  return html;
+}
+
+function inlineMd(t){
+  return t
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/__(.+?)__/g,'<strong>$1</strong>')
+    .replace(/_(.+?)_/g,'<em>$1</em>')
+    .replace(/~~(.+?)~~/g,'<s>$1</s>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');
+}
+
+// CSV → HTML table
+function csvToHtml(text){
+  function parseCSVLine(line){
+    const result=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}
+      else if(line[i]===','&&!inQ){result.push(cur.trim());cur='';}
+      else{cur+=line[i];}
+    }
+    result.push(cur.trim());return result;
+  }
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length)return'<p>Empty CSV file</p>';
+  const headers=parseCSVLine(lines[0]);
+  let html=`<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+  for(let i=1;i<lines.length;i++){
+    const cells=parseCSVLine(lines[i]);
+    html+=`<tr>${headers.map((_,j)=>`<td>${cells[j]||''}</td>`).join('')}</tr>`;
+  }
+  html+='</tbody></table>';
+  // Also add a summary paragraph
+  html=`<h1>Data Import</h1><p>This CSV contains <strong>${lines.length-1} rows</strong> and <strong>${headers.length} columns</strong>: ${headers.map(h=>`<em>${h}</em>`).join(', ')}.</p>`+html;
+  return html;
+}
+
+// Clean DOCX output from mammoth
+function cleanDocxHtml(html){
+  // mammoth gives clean HTML; we just normalise it a bit
+  return html
+    .replace(/<b>/g,'<strong>').replace(/<\/b>/g,'</strong>')
+    .replace(/<i>/g,'<em>').replace(/<\/i>/g,'</em>')
+    .replace(/\n+/g,'\n')
+    .trim();
+}
+
+// Clean raw HTML — extract body, remove scripts/styles
+function cleanHtml(html){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(html,'text/html');
+  // Remove scripts, styles, head
+  doc.querySelectorAll('script,style,link,meta,head').forEach(el=>el.remove());
+  const body=doc.body;
+  if(!body)return'<p>Could not parse HTML</p>';
+  // Clean inline styles that would conflict
+  body.querySelectorAll('[style]').forEach(el=>{
+    const s=el.getAttribute('style');
+    // Keep only non-layout styles
+    if(!/font-weight|font-style|text-decoration/.test(s))el.removeAttribute('style');
+  });
+  return body.innerHTML;
+}
+
+// JSON → readable HTML
+function jsonToHtml(obj,filename){
+  function renderValue(v,depth){
+    if(v===null)return'<em>null</em>';
+    if(typeof v==='boolean')return`<code>${v}</code>`;
+    if(typeof v==='number')return`<code>${v}</code>`;
+    if(typeof v==='string')return v.length>100?`<p>${v}</p>`:`<code>${v}</code>`;
+    if(Array.isArray(v)){
+      if(!v.length)return'<em>empty array</em>';
+      if(typeof v[0]==='object'&&v[0]!==null){
+        const keys=Object.keys(v[0]);
+        return'<table><thead><tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr></thead><tbody>'+v.map(row=>'<tr>'+keys.map(k=>`<td>${row[k]!==undefined?row[k]:''}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+      }
+      return'<ul>'+v.map(i=>`<li>${renderValue(i,depth)}</li>`).join('')+'</ul>';
+    }
+    if(typeof v==='object'){
+      const tag=depth===0?'h2':'h3';
+      return Object.entries(v).map(([k,val])=>`<${tag}>${k}</${tag}>${renderValue(val,depth+1)}`).join('');
+    }
+    return String(v);
+  }
+  let html=`<h1>${filename.replace(/\.[^.]+$/,'')}</h1><p>Structured data imported from JSON file.</p>`;
+  if(Array.isArray(obj)){html+=renderValue(obj,0);}
+  else{html+=Object.entries(obj).map(([k,v])=>`<h2>${k}</h2>${renderValue(v,1)}`).join('');}
+  return html;
+}
+
+// ══════════════ NEW PAGE (blank) ══════════════
+function openNP(){document.getElementById('npov').classList.remove('hid')}
+function closeNP(){document.getElementById('npov').classList.add('hid')}
+function pEm2(el,e){document.querySelectorAll('#npeg .eo2').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');selEmoji2=e}
+function createPg(){
+  const title=document.getElementById('npt').value.trim()||'Untitled';
+  const cat=document.getElementById('npc').value;
+  const id='pg-'+Date.now();
+  PG[id]={emoji:selEmoji2,title,cat,tags:[],by:'Alex C.',ts:'Just now',body:'<p>Start writing…</p>'};
+  DOCS.unshift({id,e:selEmoji2,t:title,p:'My Pages',c:cat});
+  closeNP();goPage(id,null);toast('"'+title+'" created','✅');
+  syncPageToFirebase(id);
+  syncSidebarToFirebase();
+  document.getElementById('npt').value='';
+}
+
+// ══════════════ EXPORT ══════════════
+function togEx(b){exOpen=!exOpen;document.getElementById('exdd').classList.toggle('op',exOpen)}
+document.addEventListener('click',e=>{if(!e.target.closest('[onclick*="togEx"]')){exOpen=false;document.getElementById('exdd').classList.remove('op')}});
+function doEx(fmt){
+  exOpen=false;document.getElementById('exdd').classList.remove('op');
+  if(!curPage){toast('Open a page first','⚠️');return}
+  const p=PG[curPage];
+  const body=document.getElementById('eb')?.innerHTML||p.body;
+  if(fmt==='md'){dl(p.title+'.md','# '+p.title+'\n\n'+toMD(body),'text/markdown');toast('Exported as Markdown')}
+  else if(fmt==='pdf'){window.print();toast('Print dialog opened')}
+  else if(fmt==='txt'){dl(p.title+'.txt',body.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(),'text/plain');toast('Exported as plain text')}
+}
+function bulkEx(){
+  exOpen=false;document.getElementById('exdd').classList.remove('op');
+  const all=Object.entries(PG).map(([_,p])=>'# '+p.title+'\n\n'+toMD(p.body)).join('\n\n---\n\n');
+  dl('cx-hub-export.md',all,'text/markdown');
+  toast('Bulk export — '+Object.keys(PG).length+' pages','✅');
+}
+function dl(name,content,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;a.click()}
+function toMD(h){return h.replace(/<h1[^>]*>(.*?)<\/h1>/gi,'# $1\n\n').replace(/<h2[^>]*>(.*?)<\/h2>/gi,'## $1\n\n').replace(/<h3[^>]*>(.*?)<\/h3>/gi,'### $1\n\n').replace(/<strong[^>]*>(.*?)<\/strong>/gi,'**$1**').replace(/<b>(.*?)<\/b>/gi,'**$1**').replace(/<em[^>]*>(.*?)<\/em>/gi,'_$1_').replace(/<li[^>]*>(.*?)<\/li>/gi,'- $1\n').replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi,'> $1\n\n').replace(/<p[^>]*>(.*?)<\/p>/gi,'$1\n\n').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').replace(/\n{3,}/g,'\n\n').trim()}
+
+// ══════════════ UTILS ══════════════
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+function formatBytes(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/1024/1024).toFixed(1)+' MB'}
+function toast(msg,icon='✓'){const t=document.getElementById('toast');document.getElementById('ttx').textContent=' '+msg;document.getElementById('tic').textContent=icon;t.classList.add('sh');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('sh'),3000)}
+
+// ══════════════ KEYBOARD ══════════════
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch()}
+  if((e.metaKey||e.ctrlKey)&&e.key==='e'){e.preventDefault();if(curPage)toggleEditMode();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();if(isEditing)saveEdit();}
+  if(e.key==='Escape'){
+    if(isEditing){discardEdit();return;}
+    ['sov','imp-ov','npov'].forEach(id=>document.getElementById(id).classList.add('hid'));
+    exOpen=false;document.getElementById('exdd').classList.remove('op');
+  }
+});
+
+
+
+// ═══════════════════════════════════════════════════════
+//  SIDEBAR MANAGER  — full data-driven sidebar system
+// ═══════════════════════════════════════════════════════
+
+// Central data model for the entire sidebar
+let SIDEBAR = {
+  scripts: {
+    label: 'Scripts',
+    sections: [
+      {
+        type: 'dropdown',
+        id: 'inbound',
+        icon: '📞',
+        name: '1. Inbound Service',
+        children: [
+          {id:'inbound-internet', icon:'🌐', name:'a. Internet Supply Down'},
+          {id:'inbound-rdni',     icon:'📡', name:'b. RDNI'},
+          {id:'inbound-recovery', icon:'🔄', name:'c. Recovery'},
+          {id:'inbound-renewal',  icon:'📋', name:'d. Help in Renewal'},
+        ]
+      },
+      {
+        type: 'dropdown',
+        id: 'sales',
+        icon: '💼',
+        name: '2. Sales and Status',
+        children: [
+          {id:'sales-enquiry', icon:'📝', name:'a. Enquiry'},
+        ]
+      },
+      {type:'page', id:'outbound-service', icon:'📤', name:'3. Outbound Service'},
+      {type:'page', id:'router-recovery',  icon:'📶', name:'4. Router Recovery'},
+    ]
+  },
+  sop: {
+    label: 'SOPs',
+    sections: [
+      {
+        type: 'dropdown',
+        id: 'sops',
+        icon: '📁',
+        name: 'SOPs',
+        children: [
+          {id:'refund-sop',      icon:'💰', name:'Refund Authorization'},
+          {id:'escalation-sop',  icon:'⬆️', name:'Escalation SOP'},
+        ]
+      },
+    ]
+  },
+  training: {
+    label: 'Training',
+    sections: [
+      {type:'page', id:'training', icon:'🎓', name:'Training Materials'},
+    ]
+  },
+  faq: {
+    label: 'FAQs',
+    sections: [
+      {type:'page', id:'faqs',         icon:'❓', name:'FAQs & Edge Cases'},
+      {type:'page', id:'ticket-guide', icon:'🎫', name:'Ticket Handling'},
+    ]
+  }
+};
+
+let mgrOpenDD = {};          // which dropdowns are open in manager
+let mgrActiveTab = 'scripts';
+let mgrFormState = null;     // what form is currently showing
+
+// ── Open / close ──
+function openSidebarMgr() {
+  document.getElementById('mgr-ov').classList.remove('hid');
+  renderMgrTab('scripts');
+}
+function closeSidebarMgr() {
+  document.getElementById('mgr-ov').classList.add('hid');
+}
+function mgrTab(btn, tab) {
+  document.querySelectorAll('.mgr-tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.mgr-tab-panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('mgr-' + tab).classList.add('on');
+  mgrActiveTab = tab;
+  renderMgrTab(tab);
+}
+
+// ── Main render ──
+function renderMgrTab(tab) {
+  const cat = SIDEBAR[tab];
+  if (!cat) return;
+  const container = document.getElementById('mgr-' + tab);
+  let html = '';
+
+  cat.sections.forEach((sec, si) => {
+    if (sec.type === 'dropdown') {
+      const open = mgrOpenDD[tab + '_' + si] ? 'op' : '';
+      const childCount = (sec.children || []).length;
+      html += `
+      <div class="mgr-section">
+        <div class="mgr-sec-head">
+          <span style="font-size:15px">${sec.icon}</span>
+          <span class="mgr-sec-label">${sec.name}</span>
+          <button class="mgr-sec-rename" onclick="mgrRenameDropdown('${tab}',${si})">✏️ Rename</button>
+          <button class="mgr-sec-del" onclick="mgrDeleteDropdown('${tab}',${si})" title="Delete this dropdown">🗑</button>
+        </div>
+        <div style="padding:4px 10px 8px">
+          ${(sec.children || []).map((child, ci) => `
+          <div class="mgr-sub" id="msub-${tab}-${si}-${ci}">
+            <span class="mgr-sub-icon">${child.icon}</span>
+            <span class="mgr-sub-name">${child.name}</span>
+            <button class="mgr-sub-del" onclick="mgrDeleteSubpage('${tab}',${si},${ci})" title="Remove">✕</button>
+          </div>`).join('')}
+          <button class="mgr-add-sub" onclick="mgrShowAddSubpage('${tab}',${si})">+ Add subpage</button>
+          <div id="mgr-form-${tab}-${si}" style="display:none"></div>
+        </div>
+      </div>`;
+    } else {
+      // Standalone page
+      html += `
+      <div class="mgr-single">
+        <span class="mgr-single-icon">${sec.icon}</span>
+        <span class="mgr-single-name">${sec.name}</span>
+        <button class="mgr-single-del" onclick="mgrDeletePage('${tab}',${si})">🗑 Remove</button>
+      </div>`;
+    }
+  });
+
+  // Add new dropdown / page buttons
+  html += `
+  <button class="mgr-add-dd" onclick="mgrShowAddDropdown('${tab}')">＋ Add new dropdown section</button>
+  <button class="mgr-add-dd" style="margin-top:4px" onclick="mgrShowAddPage('${tab}')">＋ Add standalone page</button>
+  <div id="mgr-form-new-${tab}" style="display:none"></div>`;
+
+  container.innerHTML = html;
+}
+
+// ── Add subpage to dropdown ──
+function mgrShowAddSubpage(tab, si) {
+  const formId = `mgr-form-${tab}-${si}`;
+  const el = document.getElementById(formId);
+  if (!el) return;
+  const emojis = ['📋','📞','📝','🌐','📡','🔄','💰','🔧','❓','⚙️','🎓','💡','📊','🛡️','📤','📶','🤝','💳'];
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="mgr-form">
+      <div class="mgr-form-title">Add subpage to "${SIDEBAR[tab].sections[si].name}"</div>
+      <div class="mgr-emoji-row">${emojis.map(e=>`<div class="mgr-em" onclick="selMgrEm(this,'${tab}',${si},'sub')">${e}</div>`).join('')}</div>
+      <input class="mgr-inp" id="mfi-name-${tab}-${si}" placeholder="Subpage name  e.g. b. Password Reset" />
+      <div class="mgr-form-btns">
+        <button class="mgr-btn-cancel" onclick="mgrHideForm('${formId}')">Cancel</button>
+        <button class="mgr-btn-save" onclick="mgrSaveSubpage('${tab}',${si})">Add subpage</button>
+      </div>
+    </div>`;
+  // default select first emoji
+  el.querySelector('.mgr-em').classList.add('s');
+  el.querySelector('.mgr-em').dataset.selected = 'true';
+}
+
+function selMgrEm(el, tab, si, type) {
+  el.closest('.mgr-emoji-row').querySelectorAll('.mgr-em').forEach(e => e.classList.remove('s'));
+  el.classList.add('s');
+}
+
+function getSelEmoji(tab, si) {
+  const formId = `mgr-form-${tab}-${si}`;
+  const el = document.getElementById(formId);
+  if (!el) return '📋';
+  const sel = el.querySelector('.mgr-em.s');
+  return sel ? sel.textContent : '📋';
+}
+
+function getSelEmojiNew(tab) {
+  const el = document.getElementById('mgr-form-new-' + tab);
+  if (!el) return '📋';
+  const sel = el.querySelector('.mgr-em.s');
+  return sel ? sel.textContent : '📋';
+}
+
+function mgrSaveSubpage(tab, si) {
+  const nameEl = document.getElementById(`mfi-name-${tab}-${si}`);
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { nameEl.style.borderColor='var(--rose)'; return; }
+  const icon = getSelEmoji(tab, si);
+  const id = 'page-' + Date.now();
+
+  // Add to data model
+  SIDEBAR[tab].sections[si].children = SIDEBAR[tab].sections[si].children || [];
+  SIDEBAR[tab].sections[si].children.push({id, icon, name});
+
+  // Create a blank page
+  PG[id] = {emoji: icon, title: name, cat: tab, tags: [SIDEBAR[tab].label], by:'Alex C.', ts:'Just now', body:`<h1>${name}</h1><p>Click the <strong>✏️ Edit</strong> button above to start writing this page.</p>`};
+  DOCS.unshift({id, e: icon, t: name, p: SIDEBAR[tab].label + ' › ' + SIDEBAR[tab].sections[si].name, c: tab});
+
+  // Re-render sidebar & manager
+  rebuildSidebar();
+  renderMgrTab(tab);
+  syncPageToFirebase(id);
+  syncSidebarToFirebase();
+  toast('"' + name + '" added', '✅');
+}
+
+function mgrHideForm(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+// ── Delete subpage ──
+function mgrDeleteSubpage(tab, si, ci) {
+  const sec = SIDEBAR[tab].sections[si];
+  const child = sec.children[ci];
+  if (!confirm(`Remove "${child.name}" from the sidebar? (The page content is kept)`)) return;
+  sec.children.splice(ci, 1);
+  rebuildSidebar();
+  renderMgrTab(tab);
+  toast('Removed from sidebar');
+}
+
+// ── Delete dropdown ──
+function mgrDeleteDropdown(tab, si) {
+  const sec = SIDEBAR[tab].sections[si];
+  if (!confirm(`Delete the entire "${sec.name}" section and all its subpages from the sidebar?`)) return;
+  SIDEBAR[tab].sections.splice(si, 1);
+  rebuildSidebar();
+  renderMgrTab(tab);
+  toast('Section deleted');
+}
+
+// ── Delete standalone page ──
+function mgrDeletePage(tab, si) {
+  const sec = SIDEBAR[tab].sections[si];
+  if (!confirm(`Remove "${sec.name}" from the sidebar?`)) return;
+  SIDEBAR[tab].sections.splice(si, 1);
+  rebuildSidebar();
+  renderMgrTab(tab);
+  toast('Page removed from sidebar');
+}
+
+// ── Rename dropdown ──
+function mgrRenameDropdown(tab, si) {
+  const sec = SIDEBAR[tab].sections[si];
+  const newName = prompt('New name for this section:', sec.name);
+  if (newName && newName.trim()) {
+    sec.name = newName.trim();
+    // Also rename the icon if user prefixes with emoji
+    rebuildSidebar();
+    renderMgrTab(tab);
+    toast('Renamed to "' + sec.name + '"');
+  }
+}
+
+// ── Add new dropdown section ──
+function mgrShowAddDropdown(tab) {
+  const formId = 'mgr-form-new-' + tab;
+  const el = document.getElementById(formId);
+  if (!el) return;
+  const emojis = ['📞','💼','📤','📶','📁','🎓','❓','📋','🔧','💡','📊','🛡️','🤝','💳','🔄','🌐'];
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="mgr-form">
+      <div class="mgr-form-title">Add new dropdown section to ${SIDEBAR[tab].label}</div>
+      <div class="mgr-emoji-row">${emojis.map(e=>`<div class="mgr-em" onclick="selMgrEm(this,'${tab}','new','dd')">${e}</div>`).join('')}</div>
+      <input class="mgr-inp" id="mfi-dd-name-${tab}" placeholder="Section name  e.g. 5. Chat Support" />
+      <div class="mgr-form-btns">
+        <button class="mgr-btn-cancel" onclick="mgrHideForm('${formId}')">Cancel</button>
+        <button class="mgr-btn-save" onclick="mgrSaveDropdown('${tab}')">Create section</button>
+      </div>
+    </div>`;
+  el.querySelector('.mgr-em').classList.add('s');
+}
+
+function mgrSaveDropdown(tab) {
+  const nameEl = document.getElementById('mfi-dd-name-' + tab);
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { if(nameEl) nameEl.style.borderColor='var(--rose)'; return; }
+  const icon = getSelEmojiNew(tab);
+  const id = 'dd-' + Date.now();
+  SIDEBAR[tab].sections.push({type:'dropdown', id, icon, name, children:[]});
+  rebuildSidebar();
+  renderMgrTab(tab);
+  syncSidebarToFirebase();
+  toast('"' + name + '" section added', '✅');
+}
+
+// ── Add standalone page ──
+function mgrShowAddPage(tab) {
+  const formId = 'mgr-form-new-' + tab;
+  const el = document.getElementById(formId);
+  if (!el) return;
+  const emojis = ['📋','📞','📝','🌐','📡','🔄','💰','🔧','❓','⚙️','🎓','💡','📊','🛡️'];
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="mgr-form">
+      <div class="mgr-form-title">Add standalone page to ${SIDEBAR[tab].label}</div>
+      <div class="mgr-emoji-row">${emojis.map(e=>`<div class="mgr-em" onclick="selMgrEm(this,'${tab}','new','pg')">${e}</div>`).join('')}</div>
+      <input class="mgr-inp" id="mfi-pg-name-${tab}" placeholder="Page name  e.g. WhatsApp Script" />
+      <div class="mgr-form-btns">
+        <button class="mgr-btn-cancel" onclick="mgrHideForm('${formId}')">Cancel</button>
+        <button class="mgr-btn-save" onclick="mgrSavePage('${tab}')">Add page</button>
+      </div>
+    </div>`;
+  el.querySelector('.mgr-em').classList.add('s');
+}
+
+function mgrSavePage(tab) {
+  const nameEl = document.getElementById('mfi-pg-name-' + tab);
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { if(nameEl) nameEl.style.borderColor='var(--rose)'; return; }
+  const icon = getSelEmojiNew(tab);
+  const id = 'pg-' + Date.now();
+  SIDEBAR[tab].sections.push({type:'page', id, icon, name});
+  PG[id] = {emoji: icon, title: name, cat: tab, tags: [SIDEBAR[tab].label], by:'Alex C.', ts:'Just now', body:`<h1>${name}</h1><p>Click <strong>✏️ Edit</strong> to start writing this page.</p>`};
+  DOCS.unshift({id, e: icon, t: name, p: SIDEBAR[tab].label, c: tab});
+  rebuildSidebar();
+  renderMgrTab(tab);
+  syncPageToFirebase(id);
+  syncSidebarToFirebase();
+  toast('"' + name + '" page added', '✅');
+}
+
+// ═══════════════════════════════════════════════════
+//  REBUILD SIDEBAR from SIDEBAR data model
+// ═══════════════════════════════════════════════════
+function rebuildSidebar() {
+  const nav = document.querySelector('nav.nscr');
+  if (!nav) return;
+
+  let html = `<div><button class="nb ${!curPage?'act':''}" id="nb-dash" onclick="showDash(this)"><span class="ni">🏠</span><span class="lbl">Dashboard</span></button></div>`;
+
+  const tabIcons = {scripts:'📞', sop:'📁', training:'🎓', faq:'❓'};
+
+  Object.entries(SIDEBAR).forEach(([catKey, cat]) => {
+    html += `<span class="sec">${cat.label}</span>`;
+    cat.sections.forEach((sec, si) => {
+      if (sec.type === 'dropdown') {
+        const children = sec.children || [];
+        html += `
+        <div>
+          <button class="nb" onclick="togNav(this,'${sec.id}')">
+            <span class="ni">${sec.icon}</span>
+            <span class="lbl">${sec.name}</span>
+            ${children.length ? `<span class="nbg">${children.length}</span>` : ''}
+            <span class="nar" id="ar-${sec.id}">▶</span>
+          </button>
+          <div class="nch" id="ch-${sec.id}">
+            ${children.map(child => `
+            <button class="nb" onclick="goPage('${child.id}',this)">
+              <span class="ni">${child.icon}</span>
+              <span class="lbl">${child.name}</span>
+            </button>`).join('')}
+          </div>
+        </div>`;
+      } else {
+        html += `
+        <div>
+          <button class="nb" onclick="goPage('${sec.id}',this)">
+            <span class="ni">${sec.icon}</span>
+            <span class="lbl">${sec.name}</span>
+          </button>
+        </div>`;
+      }
+    });
+  });
+
+  html += `<div id="imported-nav"></div>`;
+  nav.innerHTML = html;
+}
+
+
+
+// ═══ LANDING PAGE CARD TOGGLE ═══
+let openCard = null;
+
+
+function toggleLgroup(id) {
+  const grp = document.getElementById('lg-' + id);
+  if (!grp) return;
+  const isOpen = grp.classList.contains('open');
+  // Close all groups in same card first
+  document.querySelectorAll('.lgroup.open').forEach(g => g.classList.remove('open'));
+  if (!isOpen) grp.classList.add('open');
+}
+
+function toggleLcard(cat) {
+  const card = document.getElementById('lcard-' + cat);
+  if (!card) return;
+  const isOpen = card.classList.contains('open');
+  // Close all cards first
+  ['scripts','sop','training','faq'].forEach(c => {
+    const el = document.getElementById('lcard-' + c);
+    if (el) el.classList.remove('open');
+  });
+  // Open clicked one if it wasn't already open
+  if (!isOpen) {
+    card.classList.add('open');
+    openCard = cat;
+    // Scroll card into view smoothly
+    setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
+  } else {
+    openCard = null;
+  }
+}
+
+// Update landing page greeting based on time
+function updateGreeting() {
+  const h = new Date().getHours();
+  const greet = h < 12 ? '' : h < 17 ? '' : '';
+  const el = document.getElementById('lh-greeting');
+  if (el) el.textContent = greet;
+  const dt = document.getElementById('ddt');
+  if (dt) dt.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+// Update card counts from live SIDEBAR data
+function updateLandingCounts() {
+  try {
+    const scriptPages = SIDEBAR.scripts ? SIDEBAR.scripts.sections.reduce((a,s) => a + (s.type==='dropdown' ? (s.children||[]).length : 1), 0) : 7;
+    const sopPages = SIDEBAR.sop ? SIDEBAR.sop.sections.reduce((a,s) => a + (s.type==='dropdown' ? (s.children||[]).length : 1), 0) : 5;
+    const trainPages = SIDEBAR.training ? SIDEBAR.training.sections.length : 3;
+    const faqPages = SIDEBAR.faq ? SIDEBAR.faq.sections.length : 2;
+    const e1 = document.getElementById('ls-scripts'); if(e1) e1.textContent = scriptPages;
+    const e2 = document.getElementById('ls-sops'); if(e2) e2.textContent = sopPages;
+    const e3 = document.getElementById('ls-training'); if(e3) e3.textContent = trainPages;
+    const e4 = document.getElementById('ls-faqs'); if(e4) e4.textContent = faqPages;
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE REALTIME SYNC
+//  Every save, edit, new page, import, sidebar change → syncs live
+//  to all connected team members instantly
+// ═══════════════════════════════════════════════════════════════
+
+let db = null;          // Firebase database reference
+let fbConnected = false;
+let currentUser = 'User-' + Math.random().toString(36).slice(2,6).toUpperCase();
+let lastSavedHash = '';
+let syncEnabled = false;
+
+// ── Firebase setup / config ──
+function initFirebase(dbUrl) {
+  try {
+    const firebaseConfig = { databaseURL: dbUrl };
+    // Initialize only once
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.database();
+    syncEnabled = true;
+    setupRealtimeListeners();
+    trackPresence();
+    setSyncStatus('connected', '🟢 Live sync ON — all changes visible to team instantly');
+    toast('Live sync enabled! Everyone will see changes in real time', '🔥');
+    console.log('Firebase connected:', dbUrl);
+  } catch(e) {
+    setSyncStatus('error', '⚠️ Firebase connection failed: ' + e.message);
+    console.error('Firebase init error:', e);
+  }
+}
+
+function setSyncStatus(state, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  const bar = document.getElementById('sync-bar');
+  if (!dot || !lbl) return;
+  dot.className = 'sync-dot' + (state === 'saving' ? ' pulse' : state === 'error' ? ' off' : state === 'idle' ? ' warn' : '');
+  lbl.textContent = label;
+  bar.className = 'sync-bar' + (state === 'saving' ? ' saving' : state === 'error' ? ' error' : '');
+}
+
+// ── Setup screen ──
+function openSetup() {
+  document.getElementById('setup-ov').classList.remove('hid');
+}
+function skipSetup() {
+  document.getElementById('setup-ov').classList.add('hid');
+  setSyncStatus('idle', '⚪ No sync — changes only visible to you. Click "Configure sync" to enable.');
+  localStorage.setItem('cx_hub_skip_setup', '1');
+}
+function saveFirebaseConfig() {
+  const url = document.getElementById('fb-url-inp').value.trim();
+  if (!url || !url.includes('firebaseio.com')) {
+    document.getElementById('fb-url-inp').style.borderColor = 'var(--rose)';
+    toast('Please enter a valid Firebase database URL', '⚠️');
+    return;
+  }
+  localStorage.setItem('cx_hub_firebase_url', url);
+  document.getElementById('setup-ov').classList.add('hid');
+  initFirebase(url);
+}
+
+// ── Realtime listeners — listen for changes from other users ──
+function setupRealtimeListeners() {
+  if (!db) return;
+
+  // Listen for page content changes
+  db.ref('pages').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+    let changed = false;
+    Object.entries(data).forEach(([id, pageData]) => {
+      // Only update if the change came from another user
+      if (pageData && pageData._updatedBy !== currentUser) {
+        if (!PG[id] || PG[id].body !== pageData.body || PG[id].title !== pageData.title) {
+          PG[id] = { ...PG[id], ...pageData };
+          delete PG[id]._updatedBy;
+          delete PG[id]._updatedAt;
+          changed = true;
+          // If viewing this page, refresh it
+          if (curPage === id && !isEditing) {
+            renderPage(id);
+            showLiveUpdateToast(pageData.title || id);
+          }
+        }
+      }
+    });
+
+    // Handle deleted pages
+    if (changed) {
+      rebuildSidebar();
+    }
+  });
+
+  // Listen for sidebar structure changes
+  db.ref('sidebar').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+    try {
+      const incoming = JSON.parse(data.structure);
+      if (data._updatedBy !== currentUser) {
+        SIDEBAR = incoming;
+        rebuildSidebar();
+        renderMgrTab(mgrActiveTab);
+      }
+    } catch(e) {}
+  });
+
+  // Listen for new pages added by others
+  db.ref('pages').on('child_added', (snapshot) => {
+    const id = snapshot.key;
+    const pageData = snapshot.val();
+    if (!pageData || PG[id]) return; // already have it
+    if (pageData._updatedBy === currentUser) return;
+    PG[id] = { ...pageData };
+    delete PG[id]._updatedBy;
+    delete PG[id]._updatedAt;
+    // Add to DOCS if not there
+    if (!DOCS.find(d => d.id === id)) {
+      DOCS.unshift({ id, e: pageData.emoji || '📄', t: pageData.title || 'Untitled', p: pageData.cat || 'Imported', c: pageData.cat || 'imported' });
+    }
+    rebuildSidebar();
+    toast('"' + (pageData.title||'New page') + '" added by a teammate', '📄');
+  });
+
+  // Listen for deleted pages
+  db.ref('pages').on('child_removed', (snapshot) => {
+    const id = snapshot.key;
+    if (PG[id]) {
+      delete PG[id];
+      DOCS = DOCS.filter(d => d.id !== id);
+      rebuildSidebar();
+      if (curPage === id) showDash(null);
+    }
+  });
+
+  setSyncStatus('connected', '🟢 Live sync ON — connected');
+}
+
+function showLiveUpdateToast(title) {
+  toast('"' + title + '" was just updated by a teammate', '🔄');
+}
+
+// ── Track online presence ──
+function trackPresence() {
+  if (!db) return;
+  const presenceRef = db.ref('presence/' + currentUser);
+  presenceRef.set({ name: currentUser, online: true, ts: Date.now() });
+  presenceRef.onDisconnect().remove();
+
+  db.ref('presence').on('value', (snapshot) => {
+    const users = snapshot.val();
+    const count = users ? Object.keys(users).length : 0;
+    const el = document.getElementById('sync-users');
+    if (el) el.textContent = count > 0 ? count + ' online' : '';
+  });
+}
+
+// ── SAVE TO FIREBASE — called after every save action ──
+function syncPageToFirebase(id) {
+  if (!db || !syncEnabled) return;
+  const p = PG[id];
+  if (!p) return;
+  setSyncStatus('saving', '⏫ Saving...');
+  db.ref('pages/' + id).set({
+    ...p,
+    _updatedBy: currentUser,
+    _updatedAt: Date.now()
+  }).then(() => {
+    setSyncStatus('connected', '🟢 Saved & synced — team sees your changes now');
+    setTimeout(() => setSyncStatus('connected', '🟢 Live sync ON'), 2500);
+  }).catch(e => {
+    setSyncStatus('error', '⚠️ Sync failed: ' + e.message);
+  });
+}
+
+function syncSidebarToFirebase() {
+  if (!db || !syncEnabled) return;
+  db.ref('sidebar').set({
+    structure: JSON.stringify(SIDEBAR),
+    _updatedBy: currentUser,
+    _updatedAt: Date.now()
+  }).catch(e => console.error('Sidebar sync error:', e));
+}
+
+function syncDeleteToFirebase(id) {
+  if (!db || !syncEnabled) return;
+  db.ref('pages/' + id).remove().catch(e => console.error('Delete sync error:', e));
+}
+
+// ── Load all pages from Firebase on startup ──
+async function loadFromFirebase() {
+  if (!db) return;
+  setSyncStatus('saving', '⬇️ Loading latest content...');
+  try {
+    const snapshot = await db.ref('pages').once('value');
+    const data = snapshot.val();
+    if (data) {
+      Object.entries(data).forEach(([id, pageData]) => {
+        const clean = { ...pageData };
+        delete clean._updatedBy;
+        delete clean._updatedAt;
+        PG[id] = clean;
+        if (!DOCS.find(d => d.id === id)) {
+          DOCS.unshift({ id, e: clean.emoji || '📄', t: clean.title || 'Untitled', p: clean.cat || '', c: clean.cat || 'scripts' });
+        }
+      });
+    }
+    // Load sidebar structure
+    const sbSnap = await db.ref('sidebar').once('value');
+    const sbData = sbSnap.val();
+    if (sbData && sbData.structure) {
+      try { SIDEBAR = JSON.parse(sbData.structure); } catch(e) {}
+    }
+    rebuildSidebar();
+    setSyncStatus('connected', '🟢 Live sync ON — all changes visible to team instantly');
+  } catch(e) {
+    setSyncStatus('error', '⚠️ Could not load from Firebase: ' + e.message);
+  }
+}
+
+// ── Auto-save to Firebase when a page is pushed to Firebase ──
+// We hook into the existing saveEdit() by patching it after definition
+const _origSaveEdit = null; // patched in init
+
+// ══════════════ INIT ══════════════
+runS('');
+rebuildSidebar();
+updateLandingCounts();
+
+// Auto-connect Firebase if config was previously saved
+(async function initSync(){
+  const savedUrl = localStorage.getItem('cx_hub_firebase_url');
+  const skipped = localStorage.getItem('cx_hub_skip_setup');
+  if(savedUrl){
+    // Reconnect automatically
+    document.getElementById('fb-url-inp').value = savedUrl;
+    document.getElementById('setup-ov').classList.add('hid');
+    initFirebase(savedUrl);
+    await loadFromFirebase();
+  } else if(skipped){
+    document.getElementById('setup-ov').classList.add('hid');
+    setSyncStatus('idle','⚪ Sync not configured — your changes are only visible to you. Click "Configure sync" to enable live sync.');
+  } else {
+    // First time — show setup
+    setSyncStatus('idle','⚪ Not connected — set up Firebase to enable live sync for your team');
+    // Show setup after 1 second
+    setTimeout(()=>{
+      document.getElementById('setup-ov').classList.remove('hid');
+    }, 1000);
+  }
+})();
+</script>
+<style>@media print{#sb,#topbar,.toolbar,.cpc{display:none!important}#main{overflow:visible}.eo{padding:20px;max-width:100%}body{overflow:visible;height:auto}}</style>
+</body>
+</html>
